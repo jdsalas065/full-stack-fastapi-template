@@ -34,4 +34,4 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "FastAPI Base Project"
 
 
-settings = Settings()  # type: ignore
+settings = Settings()
