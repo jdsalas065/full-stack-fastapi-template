@@ -1,20 +1,15 @@
 # Full Stack FastAPI Template
 
-<a href="https://github.com/fastapi/full-stack-fastapi-template/actions?query=workflow%3A%22Test+Docker+Compose%22" target="_blank"><img src="https://github.com/fastapi/full-stack-fastapi-template/workflows/Test%20Docker%20Compose/badge.svg" alt="Test Docker Compose"></a>
-<a href="https://github.com/fastapi/full-stack-fastapi-template/actions?query=workflow%3A%22Test+Backend%22" target="_blank"><img src="https://github.com/fastapi/full-stack-fastapi-template/workflows/Test%20Backend/badge.svg" alt="Test Backend"></a>
-<a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/fastapi/full-stack-fastapi-template" target="_blank"><img src="https://coverage-badge.samuelcolvin.workers.dev/fastapi/full-stack-fastapi-template.svg" alt="Coverage"></a>
-
 ## Technology Stack and Features
 
-- ⚡ [**FastAPI**](https://fastapi.tiangolo.com) for the Python backend API.
-  - 🧰 [SQLModel](https://sqlmodel.tiangolo.com) for the Python SQL database interactions (ORM).
+- ⚡ **FastAPI** for the Python backend API.
+  - 🧰 **SQLModel** for the Python SQL database interactions (ORM).
   - 🔍 [Pydantic](https://docs.pydantic.dev), used by FastAPI, for the data validation and settings management.
   - 💾 [PostgreSQL](https://www.postgresql.org) as the SQL database.
 - 🚀 [React](https://react.dev) for the frontend.
   - 💃 Using TypeScript, hooks, [Vite](https://vitejs.dev), and other parts of a modern frontend stack.
   - 🎨 [Tailwind CSS](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com) for the frontend components.
   - 🤖 An automatically generated frontend client.
-  - 🧪 [Playwright](https://playwright.dev) for End-to-End testing.
   - 🦇 Dark mode support.
 - 🐋 [Docker Compose](https://www.docker.com) for development and production.
 - 🔒 Secure password hashing by default.
@@ -28,23 +23,23 @@
 
 ### Dashboard Login
 
-[![API docs](img/login.png)](https://github.com/fastapi/full-stack-fastapi-template)
+![API docs](img/login.png)
 
 ### Dashboard - Admin
 
-[![API docs](img/dashboard.png)](https://github.com/fastapi/full-stack-fastapi-template)
+![API docs](img/dashboard.png)
 
 ### Dashboard - Items
 
-[![API docs](img/dashboard-items.png)](https://github.com/fastapi/full-stack-fastapi-template)
+![API docs](img/dashboard-items.png)
 
 ### Dashboard - Dark Mode
 
-[![API docs](img/dashboard-dark.png)](https://github.com/fastapi/full-stack-fastapi-template)
+![API docs](img/dashboard-dark.png)
 
 ### Interactive API Documentation
 
-[![API docs](img/docs.png)](https://github.com/fastapi/full-stack-fastapi-template)
+![API docs](img/docs.png)
 
 ## How To Use It
 
@@ -62,7 +57,7 @@ But you can do the following:
 - Clone this repository manually, set the name with the name of the project you want to use, for example `my-full-stack`:
 
 ```bash
-git clone git@github.com:fastapi/full-stack-fastapi-template.git my-full-stack
+git clone <your-repository-url> my-full-stack
 ```
 
 - Enter into the new directory:
@@ -74,13 +69,13 @@ cd my-full-stack
 - Set the new origin to your new repository, copy it from the GitHub interface, for example:
 
 ```bash
-git remote set-url origin git@github.com:octocat/my-full-stack.git
+git remote set-url origin <your-new-repository-url>
 ```
 
-- Add this repo as another "remote" to allow you to get updates later:
+- Add the upstream repo as another "remote" to allow you to get updates later (optional):
 
 ```bash
-git remote add upstream git@github.com:fastapi/full-stack-fastapi-template.git
+git remote add upstream <upstream-repository-url>
 ```
 
 - Push the code to your new repository:
@@ -98,10 +93,10 @@ After cloning the repository, and after doing changes, you might want to get the
 ```bash
 git remote -v
 
-origin    git@github.com:octocat/my-full-stack.git (fetch)
-origin    git@github.com:octocat/my-full-stack.git (push)
-upstream    git@github.com:fastapi/full-stack-fastapi-template.git (fetch)
-upstream    git@github.com:fastapi/full-stack-fastapi-template.git (push)
+origin    <your-repository-url> (fetch)
+origin    <your-repository-url> (push)
+upstream    <upstream-repository-url> (fetch)
+upstream    <upstream-repository-url> (push)
 ```
 
 - Pull the latest changes without merging:
@@ -175,16 +170,16 @@ Decide a name for your new project's directory, you will use it below. For examp
 Go to the directory that will be the parent of your project, and run the command with your project's name:
 
 ```bash
-copier copy https://github.com/fastapi/full-stack-fastapi-template my-awesome-project --trust
+copier copy <repository-url> my-awesome-project --trust
 ```
 
 If you have `pipx` and you didn't install `copier`, you can run it directly:
 
 ```bash
-pipx run copier copy https://github.com/fastapi/full-stack-fastapi-template my-awesome-project --trust
+pipx run copier copy <repository-url> my-awesome-project --trust
 ```
 
-**Note** the `--trust` option is necessary to be able to execute a [post-creation script](https://github.com/fastapi/full-stack-fastapi-template/blob/master/.copier/update_dotenv.py) that updates your `.env` files.
+**Note** the `--trust` option is necessary to be able to execute a post-creation script that updates your `.env` files.
 
 ### Input Variables
 
@@ -197,12 +192,12 @@ The input variables, with their default values (some auto generated) are:
 - `project_name`: (default: `"FastAPI Project"`) The name of the project, shown to API users (in .env).
 - `stack_name`: (default: `"fastapi-project"`) The name of the stack used for Docker Compose labels and project name (no spaces, no periods) (in .env).
 - `secret_key`: (default: `"changethis"`) The secret key for the project, used for security, stored in .env, you can generate one with the method above.
-- `first_superuser`: (default: `"admin@example.com"`) The email of the first superuser (in .env).
+- `first_superuser`: (default: `"admin@localhost"`) The email of the first superuser (in .env).
 - `first_superuser_password`: (default: `"changethis"`) The password of the first superuser (in .env).
 - `smtp_host`: (default: "") The SMTP server host to send emails, you can set it later in .env.
 - `smtp_user`: (default: "") The SMTP server user to send emails, you can set it later in .env.
 - `smtp_password`: (default: "") The SMTP server password to send emails, you can set it later in .env.
-- `emails_from_email`: (default: `"info@example.com"`) The email account to send emails from, you can set it later in .env.
+- `emails_from_email`: (default: `"noreply@localhost"`) The email account to send emails from, you can set it later in .env.
 - `postgres_password`: (default: `"changethis"`) The password for the PostgreSQL database, stored in .env, you can generate one with the method above.
 - `sentry_dsn`: (default: "") The DSN for Sentry, if you are using it, you can set it later in .env.
 
