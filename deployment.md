@@ -12,7 +12,7 @@ But you have to configure a couple things first. 🤓
 
 * Have a remote server ready and available.
 * Configure the DNS records of your domain to point to the IP of the server you just created.
-* Configure a wildcard subdomain for your domain, so that you can have multiple subdomains for different services, e.g. `*.fastapi-project.example.com`. This will be useful for accessing different components, like `dashboard.fastapi-project.example.com`, `api.fastapi-project.example.com`, `traefik.fastapi-project.example.com`, `adminer.fastapi-project.example.com`, etc. And also for `staging`, like `dashboard.staging.fastapi-project.example.com`, `adminer.staging.fastapi-project.example.com`, etc.
+* Configure a wildcard subdomain for your domain, so that you can have multiple subdomains for different services, e.g. `*.myproject.example.com`. This will be useful for accessing different components, like `dashboard.myproject.example.com`, `api.myproject.example.com`, `traefik.myproject.example.com`, `adminer.myproject.example.com`, etc. And also for `staging`, like `dashboard.staging.myproject.example.com`, `adminer.staging.myproject.example.com`, etc.
 * Install and configure [Docker](https://docs.docker.com/engine/install/) on the remote server (Docker Engine, not Docker Desktop).
 
 ## Public Traefik
@@ -32,7 +32,7 @@ mkdir -p /root/code/traefik-public/
 Copy the Traefik Docker Compose file to your server. You could do it by running the command `rsync` in your local terminal:
 
 ```bash
-rsync -a docker-compose.traefik.yml root@your-server.example.com:/root/code/traefik-public/
+rsync -a docker-compose.traefik.yml root@your-server.com:/root/code/traefik-public/
 ```
 
 ### Traefik Public Network
@@ -78,16 +78,16 @@ echo $HASHED_PASSWORD
 * Create an environment variable with the domain name for your server, e.g.:
 
 ```bash
-export DOMAIN=fastapi-project.example.com
+export DOMAIN=myproject.example.com
 ```
 
 * Create an environment variable with the email for Let's Encrypt, e.g.:
 
 ```bash
-export EMAIL=admin@example.com
+export EMAIL=admin@myproject.com
 ```
 
-**Note**: you need to set a different email, an email `@example.com` won't work.
+**Note**: you need to set your own email address.
 
 ### Start the Traefik Docker Compose
 
@@ -122,13 +122,13 @@ export ENVIRONMENT=production
 Set the `DOMAIN`, by default `localhost` (for development), but when deploying you would use your own domain, for example:
 
 ```bash
-export DOMAIN=fastapi-project.example.com
+export DOMAIN=myproject.example.com
 ```
 
 You can set several variables, like:
 
 * `PROJECT_NAME`: The name of the project, used in the API for the docs and emails.
-* `STACK_NAME`: The name of the stack used for Docker Compose labels and project name, this should be different for `staging`, `production`, etc. You could use the same domain replacing dots with dashes, e.g. `fastapi-project-example-com` and `staging-fastapi-project-example-com`.
+* `STACK_NAME`: The name of the stack used for Docker Compose labels and project name, this should be different for `staging`, `production`, etc. You could use the same domain replacing dots with dashes, e.g. `myproject-example-com` and `staging-myproject-example-com`.
 * `BACKEND_CORS_ORIGINS`: A list of allowed CORS origins separated by commas.
 * `SECRET_KEY`: The secret key for the FastAPI project, used to sign tokens.
 * `FIRST_SUPERUSER`: The email of the first superuser, this superuser will be the one that can create new users.
@@ -148,8 +148,8 @@ You can set several variables, like:
 
 There are some environment variables only used by GitHub Actions that you can configure:
 
-* `LATEST_CHANGES`: Used by the GitHub Action [latest-changes](https://github.com/tiangolo/latest-changes) to automatically add release notes based on the PRs merged. It's a personal access token, read the docs for details.
-* `SMOKESHOW_AUTH_KEY`: Used to handle and publish the code coverage using [Smokeshow](https://github.com/samuelcolvin/smokeshow), follow their instructions to create a (free) Smokeshow key.
+* `LATEST_CHANGES`: Used by the GitHub Action to automatically add release notes based on the PRs merged. It's a personal access token, read the docs for details.
+* `SMOKESHOW_AUTH_KEY`: Used to handle and publish the code coverage, follow their instructions to create a (free) Smokeshow key.
 
 ### Generate secret keys
 
@@ -255,7 +255,7 @@ You can read more about it in the official guide: [Configuring the self-hosted r
 
 ### Set Secrets
 
-On your repository, configure secrets for the environment variables you need, the same ones described above, including `SECRET_KEY`, etc. Follow the [official GitHub guide for setting repository secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository).
+On your repository, configure secrets for the environment variables you need, the same ones described above, including `SECRET_KEY`, etc. Follow the official GitHub guide for setting repository secrets.
 
 The current Github Actions workflows expect these secrets:
 
@@ -282,28 +282,28 @@ If you need to add extra environments you could use those as a starting point.
 
 ## URLs
 
-Replace `fastapi-project.example.com` with your domain.
+Replace `myproject.example.com` with your domain.
 
 ### Main Traefik Dashboard
 
-Traefik UI: `https://traefik.fastapi-project.example.com`
+Traefik UI: `https://traefik.myproject.example.com`
 
 ### Production
 
-Frontend: `https://dashboard.fastapi-project.example.com`
+Frontend: `https://dashboard.myproject.example.com`
 
-Backend API docs: `https://api.fastapi-project.example.com/docs`
+Backend API docs: `https://api.myproject.example.com/docs`
 
-Backend API base URL: `https://api.fastapi-project.example.com`
+Backend API base URL: `https://api.myproject.example.com`
 
-Adminer: `https://adminer.fastapi-project.example.com`
+Adminer: `https://adminer.myproject.example.com`
 
 ### Staging
 
-Frontend: `https://dashboard.staging.fastapi-project.example.com`
+Frontend: `https://dashboard.staging.myproject.example.com`
 
-Backend API docs: `https://api.staging.fastapi-project.example.com/docs`
+Backend API docs: `https://api.staging.myproject.example.com/docs`
 
-Backend API base URL: `https://api.staging.fastapi-project.example.com`
+Backend API base URL: `https://api.staging.myproject.example.com`
 
-Adminer: `https://adminer.staging.fastapi-project.example.com`
+Adminer: `https://adminer.staging.myproject.example.com`

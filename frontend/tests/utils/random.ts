@@ -1,5 +1,5 @@
 export const randomEmail = () =>
-  `test_${Math.random().toString(36).substring(7)}@example.com`
+  `test_${Math.random().toString(36).substring(7)}@localhost`
 
 export const randomTeamName = () =>
   `Team ${Math.random().toString(36).substring(7)}`
