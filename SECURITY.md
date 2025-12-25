@@ -12,9 +12,9 @@ You are encouraged to write tests for your application and update your versions 
 
 ## Reporting a Vulnerability
 
-If you think you found a vulnerability, and even if you are not sure about it, please report it right away by creating a security advisory in the GitHub repository. Please try to be as explicit as possible, describing all the steps and example code to reproduce the security issue.
+If you think you found a vulnerability, and even if you are not sure about it, please report it right away by sending an email to: security@tiangolo.com. Please try to be as explicit as possible, describing all the steps and example code to reproduce the security issue.
 
-The maintainers will review it thoroughly and get back to you.
+I (the author, [@tiangolo](https://twitter.com/tiangolo)) will review it thoroughly and get back to you.
 
 ## Public Discussions
 
@@ -26,4 +26,4 @@ It's better to discuss privately and try to find a solution first, to limit the 
 
 Thanks for your help!
 
-The community and maintainers thank you for that. 🙇
+The community and I thank you for that. 🙇

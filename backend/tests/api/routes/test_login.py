@@ -49,10 +49,10 @@ def test_recovery_password(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ) -> None:
     with (
-        patch("app.core.config.settings.SMTP_HOST", "smtp.localhost"),
-        patch("app.core.config.settings.SMTP_USER", "admin@localhost"),
+        patch("app.core.config.settings.SMTP_HOST", "smtp.example.com"),
+        patch("app.core.config.settings.SMTP_USER", "admin@example.com"),
     ):
-        email = "test@localhost"
+        email = "test@example.com"
         r = client.post(
             f"{settings.API_V1_STR}/password-recovery/{email}",
             headers=normal_user_token_headers,
@@ -64,7 +64,7 @@ def test_recovery_password(
 def test_recovery_password_user_not_exits(
     client: TestClient, normal_user_token_headers: dict[str, str]
 ) -> None:
-    email = "jVgQr@localhost"
+    email = "jVgQr@example.com"
     r = client.post(
         f"{settings.API_V1_STR}/password-recovery/{email}",
         headers=normal_user_token_headers,
