@@ -80,7 +80,7 @@ cd backend
 fastapi dev app/main.py
 ```
 
-## Docker Compose in `localhost.tiangolo.com`
+## Docker Compose with Custom Domain
 
 When you start the Docker Compose stack, it uses `localhost` by default, with different ports for each service (backend, frontend, adminer, etc).
 
