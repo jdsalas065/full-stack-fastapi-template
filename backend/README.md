@@ -67,8 +67,14 @@ backend/
 │   │   └── main.py           # API router setup
 │   ├── core/
 │   │   └── config.py         # Application configuration
-│   ├── main.py               # FastAPI application
-│   └── models.py             # Pydantic models
+│   ├── crud/                 # CRUD operations (organized by domain)
+│   │   └── __init__.py       # Ready for future CRUD modules
+│   ├── models/               # Database models (organized by domain)
+│   │   └── __init__.py       # Ready for future SQLModel models
+│   ├── schemas/              # Pydantic schemas (organized by domain)
+│   │   ├── __init__.py
+│   │   └── common.py         # Common schemas like Message
+│   └── main.py               # FastAPI application
 ├── tests/                    # Test files
 ├── pyproject.toml           # Project dependencies
 └── Dockerfile               # Docker configuration
@@ -83,10 +89,27 @@ backend/
 
 To add new features to this base:
 
-1. Create new route files in `app/api/routes/`
-2. Add new models in `app/models.py`
-3. Register routes in `app/api/main.py`
-4. Update configuration in `app/core/config.py` if needed
+1. **Add new routes:**
+   - Create new route files in `app/api/routes/`
+   - Register routes in `app/api/main.py`
+
+2. **Add database models:**
+   - Create model files in `app/models/` (e.g., `user.py`, `item.py`)
+   - Each file should contain related SQLModel models
+   - Import and expose models in `app/models/__init__.py`
+
+3. **Add schemas:**
+   - Create schema files in `app/schemas/` (e.g., `user.py`, `item.py`)
+   - Each file should contain related Pydantic schemas for validation
+   - Import and expose schemas in `app/schemas/__init__.py`
+
+4. **Add CRUD operations:**
+   - Create CRUD files in `app/crud/` (e.g., `user.py`, `item.py`)
+   - Each file should contain CRUD operations for that specific model
+   - Import and expose CRUD instances in `app/crud/__init__.py`
+
+5. **Update configuration:**
+   - Add new settings to `app/core/config.py` as needed
 
 ## Testing
 

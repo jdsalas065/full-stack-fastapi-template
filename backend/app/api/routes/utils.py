@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.models import Message
+from app.schemas import Message
 
 router = APIRouter(prefix="/utils", tags=["utils"])
 

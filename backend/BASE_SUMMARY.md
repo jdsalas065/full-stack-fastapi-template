@@ -22,8 +22,14 @@ backend/
 │   │   └── main.py            # API router
 │   ├── core/
 │   │   └── config.py          # Settings and configuration
-│   ├── main.py                # FastAPI application
-│   └── models.py              # Pydantic models
+│   ├── crud/                  # CRUD operations (organized by domain)
+│   │   └── __init__.py        # Ready for future CRUD modules
+│   ├── models/                # Database models (organized by domain)
+│   │   └── __init__.py        # Ready for future SQLModel models
+│   ├── schemas/               # Pydantic schemas (organized by domain)
+│   │   ├── __init__.py
+│   │   └── common.py          # Common schemas like Message
+│   └── main.py                # FastAPI application
 ├── tests/                     # Test files
 │   └── api/routes/test_utils.py
 ├── scripts/                   # Utility scripts
@@ -117,17 +123,57 @@ To add features to this base:
    - Create new route files in `app/api/routes/`
    - Register routes in `app/api/main.py`
 
-2. **Add models:**
-   - Define Pydantic models in `app/models.py`
+2. **Add database models:**
+   - Create model files in `app/models/` (e.g., `user.py`, `item.py`)
+   - Each file should contain related SQLModel models
+   - Import and expose models in `app/models/__init__.py`
+   - Example:
+     ```python
+     # app/models/user.py
+     from sqlmodel import Field, SQLModel
+     
+     class User(SQLModel, table=True):
+         id: int | None = Field(default=None, primary_key=True)
+         email: str = Field(unique=True)
+         name: str
+     ```
 
-3. **Add configuration:**
+3. **Add schemas:**
+   - Create schema files in `app/schemas/` (e.g., `user.py`, `item.py`)
+   - Each file should contain related Pydantic schemas for validation
+   - Import and expose schemas in `app/schemas/__init__.py`
+   - Example:
+     ```python
+     # app/schemas/user.py
+     from pydantic import BaseModel, EmailStr
+     
+     class UserCreate(BaseModel):
+         email: EmailStr
+         name: str
+     ```
+
+4. **Add CRUD operations:**
+   - Create CRUD files in `app/crud/` (e.g., `user.py`, `item.py`)
+   - Each file should contain CRUD operations for that specific model
+   - Import and expose CRUD instances in `app/crud/__init__.py`
+   - Example:
+     ```python
+     # app/crud/user.py
+     from sqlmodel import Session, select
+     from app.models.user import User
+     
+     def get_user(session: Session, user_id: int) -> User | None:
+         return session.get(User, user_id)
+     ```
+
+5. **Add configuration:**
    - Update `app/core/config.py` with new settings
 
-4. **Add dependencies:**
+6. **Add dependencies:**
    - Add to `pyproject.toml` dependencies section
    - Run `uv sync` to install
 
-5. **Add tests:**
+7. **Add tests:**
    - Create test files in `tests/` directory
    - Run `bash scripts/test.sh` to verify
 
