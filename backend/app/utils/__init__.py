@@ -5,6 +5,7 @@ Common helper functions used across the application.
 Organize into submodules as the project grows.
 """
 
+import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -51,8 +52,6 @@ def camel_to_snake(camel_str: str) -> str:
         >>> camel_to_snake("helloWorld")
         'hello_world'
     """
-    import re
-
     return re.sub(r"(?<!^)(?=[A-Z])", "_", camel_str).lower()
 
 
