@@ -8,6 +8,7 @@ import logging
 import sys
 
 from app.core.config import settings
+from app.core.constants import Environment
 
 
 def setup_logging() -> None:
@@ -16,11 +17,13 @@ def setup_logging() -> None:
 
     Sets up formatters and handlers based on environment.
     """
-    log_level = logging.DEBUG if settings.ENVIRONMENT == "local" else logging.INFO
+    log_level = (
+        logging.DEBUG if settings.ENVIRONMENT == Environment.LOCAL else logging.INFO
+    )
 
     # Create formatter
     log_format = "%(levelname)s:     %(message)s"
-    if settings.ENVIRONMENT != "local":
+    if settings.ENVIRONMENT != Environment.LOCAL:
         log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
     formatter = logging.Formatter(log_format)
