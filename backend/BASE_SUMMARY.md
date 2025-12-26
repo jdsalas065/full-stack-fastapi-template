@@ -17,18 +17,27 @@ This is a minimal FastAPI backend base created from the full-stack FastAPI templ
 backend/
 ├── app/
 │   ├── api/                    # API endpoints
+│   │   ├── dependencies.py    # Dependency injection
 │   │   ├── routes/
 │   │   │   └── utils.py       # Health check endpoint
 │   │   └── main.py            # API router
 │   ├── core/
-│   │   └── config.py          # Settings and configuration
+│   │   ├── config.py          # Settings and configuration
+│   │   ├── constants.py       # Application constants & enums
+│   │   └── logging.py         # Logging configuration
 │   ├── crud/                  # CRUD operations (organized by domain)
 │   │   └── __init__.py        # Ready for future CRUD modules
+│   ├── exceptions/            # Custom exceptions & handlers
+│   │   └── __init__.py
+│   ├── middleware/            # Custom middleware
+│   │   └── __init__.py
 │   ├── models/                # Database models (organized by domain)
 │   │   └── __init__.py        # Ready for future SQLModel models
 │   ├── schemas/               # Pydantic schemas (organized by domain)
 │   │   ├── __init__.py
 │   │   └── common.py          # Common schemas like Message
+│   ├── utils/                 # Utility functions
+│   │   └── __init__.py
 │   └── main.py                # FastAPI application
 ├── tests/                     # Test files
 │   └── api/routes/test_utils.py
@@ -37,7 +46,10 @@ backend/
 │   ├── lint.sh               # Code linting
 │   ├── test.sh               # Run tests with coverage
 │   └── prestart.sh           # Prestart checks
-└── pyproject.toml            # Dependencies and config
+├── .env.example              # Environment variables template
+├── pyproject.toml            # Dependencies and config
+├── BASE_SUMMARY.md           # This file
+└── IMPROVEMENTS.md           # Detailed improvements documentation
 ```
 
 ### Dependencies

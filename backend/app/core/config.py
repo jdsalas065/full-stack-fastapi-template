@@ -1,7 +1,9 @@
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any
 
 from pydantic import AnyUrl, BeforeValidator, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from app.core.constants import Environment
 
 
 def parse_cors(v: Any) -> list[str] | str:
@@ -20,7 +22,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     API_V1_STR: str = "/api/v1"
-    ENVIRONMENT: Literal["local", "staging", "production"] = "local"
+    ENVIRONMENT: Environment = Environment.LOCAL
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
