@@ -20,10 +20,16 @@ Example structure:
     └── item.py     (item CRUD operations)
 """
 
-# Example of how to organize CRUD when you add them:
-# from app.crud.user import user_crud
-# from app.crud.item import item_crud
-#
-# __all__ = ["user_crud", "item_crud"]
+from app.crud.document import (
+    ComparisonCRUD,
+    DocumentCRUD,
+    comparison_crud,
+    document_crud,
+)
 
-__all__ = []
+__all__ = [
+    "DocumentCRUD",
+    "document_crud",
+    "ComparisonCRUD",
+    "comparison_crud",
+]

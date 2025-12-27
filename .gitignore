@@ -4,3 +4,18 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Document storage
+storage/
+backend/storage/
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.so
+.venv/
+venv/
+ENV/
+env/

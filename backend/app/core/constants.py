@@ -20,6 +20,7 @@ class Tags(str, Enum):
     """OpenAPI tags for grouping endpoints."""
 
     UTILS = "utils"
+    DOCUMENTS = "documents"
     # Add more tags as you add features:
     # USERS = "users"
     # ITEMS = "items"

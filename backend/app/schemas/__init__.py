@@ -8,5 +8,23 @@ Example:
 """
 
 from app.schemas.common import Message
+from app.schemas.document import (
+    DocumentComparisonRequest,
+    DocumentComparisonResponse,
+    DocumentDetailResponse,
+    DocumentListResponse,
+    DocumentProcessRequest,
+    DocumentProcessResponse,
+    DocumentUploadResponse,
+)
 
-__all__ = ["Message"]
+__all__ = [
+    "Message",
+    "DocumentUploadResponse",
+    "DocumentProcessRequest",
+    "DocumentProcessResponse",
+    "DocumentComparisonRequest",
+    "DocumentComparisonResponse",
+    "DocumentDetailResponse",
+    "DocumentListResponse",
+]

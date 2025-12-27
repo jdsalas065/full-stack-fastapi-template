@@ -1,6 +1,15 @@
-from typing import Annotated, Any
+import warnings
+from typing import Annotated, Any, Self
 
-from pydantic import AnyUrl, BeforeValidator, computed_field
+from pydantic import (
+    AnyUrl,
+    BeforeValidator,
+    EmailStr,
+    HttpUrl,
+    PostgresDsn,
+    computed_field,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.core.constants import Environment
@@ -34,7 +43,28 @@ class Settings(BaseSettings):
         return [str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS]
 
     PROJECT_NAME: str
+    SECRET_KEY: str
     SENTRY_DSN: HttpUrl | None = None
+    
+    # OpenAI Configuration
+    OPENAI_API_KEY: str | None = None
+    OPENAI_MODEL: str = "gpt-4"
+    OPENAI_MAX_TOKENS: int = 2000
+    OPENAI_TEMPERATURE: float = 0.7
+    
+    # Document Processing Configuration
+    MAX_UPLOAD_SIZE_MB: int = 10
+    ALLOWED_DOCUMENT_TYPES: list[str] = [
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/tiff",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ]
+    OCR_LANGUAGE: str = "vie+eng"  # Vietnamese and English
+    DOCUMENT_STORAGE_PATH: str = "storage/documents"
+    
     POSTGRES_SERVER: str
     POSTGRES_PORT: int = 5432
     POSTGRES_USER: str

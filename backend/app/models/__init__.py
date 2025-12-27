@@ -13,11 +13,16 @@ When you add database integration:
 3. Import and expose models through __init__.py
 """
 
-# Example of how to organize models when you add them:
-# from app.models.base import BaseModel  # Common base if needed
-# from app.models.user import User
-# from app.models.item import Item
-#
-# __all__ = ["User", "Item"]
+from app.models.document import (
+    Document,
+    DocumentComparison,
+    DocumentStatus,
+    DocumentType,
+)
 
-__all__ = []
+__all__ = [
+    "Document",
+    "DocumentComparison",
+    "DocumentStatus",
+    "DocumentType",
+]
