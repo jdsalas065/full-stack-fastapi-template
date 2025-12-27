@@ -19,7 +19,7 @@ secret_key:
 first_superuser:
   type: str
   help: The email of the first superuser (in .env)
-  default: admin@example.com
+  default: admin@localhost
 
 first_superuser_password:
   type: str
@@ -44,7 +44,7 @@ smtp_password:
 emails_from_email:
   type: str
   help: The email account to send emails from, you can set it later in .env
-  default: info@example.com
+  default: noreply@localhost
 
 postgres_password:
   type: str

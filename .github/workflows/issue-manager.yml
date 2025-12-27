@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   issue-manager:
-    if: github.repository_owner == 'fastapi'
+    if: github.repository_owner != 'YOUR_ORG_HERE'  # Update this to your organization
     runs-on: ubuntu-latest
     steps:
       - name: Dump GitHub context
