@@ -2,6 +2,5 @@
 set -e
 set -x
 
-python app/tests_pre_start.py
-
+# Run tests directly - no pre-start checks needed for base version
 bash scripts/test.sh "$@"
