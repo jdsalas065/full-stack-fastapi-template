@@ -22,12 +22,16 @@ from app.schemas.document import DocumentSubmissionRequest, DocumentSubmissionRe
 
 
 # MinIO Configuration (similar to Flask configuration)
+# TODO: Move these to environment variables or config file for production
+# SECURITY: Do not hardcode credentials in production code
 MINIO_ENDPOINT = "localhost:9000"
 MINIO_ACCESS_KEY = "minioadmin"
 MINIO_SECRET_KEY = "minioadmin"
 MINIO_SECURE = False
 
 # File path constants
+# TODO: Make these configurable via environment variables or config file
+# These are temporary paths - adjust for your deployment environment
 PDF_FILE_PATH = "/tmp/pdf_files"
 DOWNLOAD_FILE_PATH = "/tmp/downloads"
 BASE_DOCUMENT_PATH = "/tmp/documents"
@@ -146,7 +150,8 @@ async def process_document_submission(
         task_id = payload.task_id
 
         # Step 1: Load document set
-        load_document_set(task_id)
+        # Note: Return value stored for potential future use in processing pipeline
+        document_set = load_document_set(task_id)  # noqa: F841
 
         # Step 2: Classify input documents
         classification_result = classify_input_documents(task_id)
