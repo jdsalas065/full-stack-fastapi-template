@@ -1,7 +1,17 @@
+import warnings
 from typing import Annotated, Any
 
-from pydantic import AnyUrl, BeforeValidator, computed_field
+from pydantic import (
+    AnyUrl,
+    BeforeValidator,
+    EmailStr,
+    HttpUrl,
+    PostgresDsn,
+    computed_field,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing_extensions import Self
 
 from app.core.constants import Environment
 
@@ -69,6 +79,8 @@ class Settings(BaseSettings):
         return self
 
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
+
+    SECRET_KEY: str = "changethis"
 
     @computed_field  # type: ignore[prop-decorator]
     @property
