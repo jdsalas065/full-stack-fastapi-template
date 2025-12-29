@@ -8,5 +8,6 @@ Example:
 """
 
 from app.schemas.common import Message
+from app.schemas.document import DocumentSubmissionRequest, DocumentSubmissionResponse
 
-__all__ = ["Message"]
+__all__ = ["Message", "DocumentSubmissionRequest", "DocumentSubmissionResponse"]
