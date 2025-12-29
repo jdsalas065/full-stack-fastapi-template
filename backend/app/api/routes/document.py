@@ -250,29 +250,192 @@ def classify_input_documents(task_id: str) -> dict[str, Any]:
 
 def check_documents(task_id: str, document_names: dict[str, Any]) -> dict[str, Any]:
     """
-    Check documents for completeness and validity.
+    Check, compare and aggregate results between financial document types.
+
+    This function validates and cross-references various financial documents including:
+    - Settlement documents
+    - E-Invoice
+    - Commercial Invoice
+    - Packing List
+    - PO/SO (Purchase Order / Sales Order)
+    - Export-CD (Export Custom Declaration)
 
     Args:
         task_id: Unique identifier for the task
-        document_names: Dictionary containing document names and metadata
+        document_names: Dictionary containing classified document names and metadata
 
     Returns:
-        Dictionary containing validation results
+        Dictionary containing:
+        - task_id: Task identifier
+        - validation_status: Overall validation status (success/partial/failed)
+        - checked_documents: List of documents that were checked
+        - comparisons: Cross-document comparison results
+        - errors: List of validation errors found
+        - warnings: List of validation warnings
+        - summary: Summary statistics
 
-    TODO: Implement document checking logic
-    - Validate document completeness
-    - Check document integrity
-    - Verify business rules compliance
-    - Return detailed check results
+    Example:
+        result = check_documents("task-123", {"settlement": ["doc1.pdf"], ...})
+        # Returns comprehensive validation results with cross-references
+
+    TODO: Implement detailed business logic for each document type
+    - Parse Item_Master.xlsx for reference data
+    - Extract data from each document type (PDF/Excel parsing)
+    - Cross-validate amounts, quantities, dates between documents
+    - Check for missing required documents
+    - Validate data consistency across document types
     """
-    # Placeholder implementation
-    return {
-        "task_id": task_id,
-        "validation_status": "success",
-        "checked_documents": document_names,
-        "errors": [],
-        "warnings": []
-    }
+    logger.info(f"Checking documents for task_id: {task_id}")
+
+    try:
+        # Get the download directory for this task
+        task_dir = Path(BASE_DOCUMENT_PATH) / task_id
+
+        # Initialize result structure with explicit types
+        errors: list[dict[str, Any]] = []
+        warnings: list[dict[str, Any]] = []
+        comparisons: list[dict[str, Any]] = []
+        missing_documents: list[str] = []
+
+        # Define required document types for financial processing
+        required_doc_types = [
+            "settlement",
+            "e_invoice",
+            "commercial_invoice",
+            "packing_list",
+            "po_so",
+            "export_cd"
+        ]
+
+        # Check if task directory exists
+        if not task_dir.exists():
+            errors.append({
+                "type": "missing_directory",
+                "message": f"Task directory not found: {task_dir}",
+                "severity": "critical"
+            })
+            return {
+                "task_id": task_id,
+                "validation_status": "failed",
+                "checked_documents": document_names,
+                "comparisons": comparisons,
+                "errors": errors,
+                "warnings": warnings,
+                "summary": {
+                    "total_documents": 0,
+                    "validated_documents": 0,
+                    "failed_documents": 1,
+                    "missing_documents": missing_documents
+                }
+            }
+
+        # Check for Item_Master.xlsx
+        item_master_path = task_dir / "Item_Master.xlsx"
+        if not item_master_path.exists():
+            warnings.append({
+                "type": "missing_reference",
+                "message": "Item_Master.xlsx not found - reference data unavailable",
+                "severity": "medium"
+            })
+
+        # List all files in task directory
+        task_files = list(task_dir.glob("*"))
+        total_documents = len(task_files)
+
+        logger.info(f"Found {total_documents} files in task directory")
+
+        # Check for required document types
+        # This is a placeholder - actual implementation would parse document_names
+        # from classification results
+        for doc_type in required_doc_types:
+            # Placeholder check - in real implementation, check if documents
+            # of each type exist based on classification results
+            if doc_type not in str(document_names).lower():
+                missing_documents.append(doc_type)
+                warnings.append({
+                    "type": "missing_document_type",
+                    "message": f"No {doc_type} document found",
+                    "doc_type": doc_type,
+                    "severity": "high"
+                })
+
+        # Placeholder: Cross-document validation
+        # In production, this would:
+        # 1. Parse Item_Master.xlsx for reference data (item codes, prices, etc.)
+        # 2. Extract structured data from each document type
+        # 3. Compare amounts, quantities, dates across documents
+        # 4. Validate business rules (e.g., Settlement amount matches Invoice total)
+
+        comparison_results: dict[str, Any] = {
+            "settlement_vs_invoice": {
+                "status": "pending",
+                "description": "Compare settlement amount with invoice total",
+                "details": "TODO: Extract and compare amounts"
+            },
+            "invoice_vs_packing_list": {
+                "status": "pending",
+                "description": "Compare item quantities and descriptions",
+                "details": "TODO: Extract and compare line items"
+            },
+            "po_so_vs_invoice": {
+                "status": "pending",
+                "description": "Verify invoice matches purchase/sales order",
+                "details": "TODO: Match order references and amounts"
+            },
+            "export_cd_vs_commercial_invoice": {
+                "status": "pending",
+                "description": "Validate export declaration against commercial invoice",
+                "details": "TODO: Compare customs data with invoice data"
+            }
+        }
+
+        # Determine overall validation status
+        validation_status = "success"
+        failed_documents = 0
+        
+        if errors:
+            validation_status = "failed"
+            failed_documents = len(errors)
+        elif warnings:
+            validation_status = "partial"
+
+        logger.info(f"Document check completed for task {task_id}: {validation_status}")
+
+        return {
+            "task_id": task_id,
+            "validation_status": validation_status,
+            "checked_documents": document_names,
+            "comparisons": comparison_results,
+            "errors": errors,
+            "warnings": warnings,
+            "summary": {
+                "total_documents": total_documents,
+                "validated_documents": total_documents,
+                "failed_documents": failed_documents,
+                "missing_documents": missing_documents
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Error checking documents for task {task_id}: {str(e)}")
+        return {
+            "task_id": task_id,
+            "validation_status": "error",
+            "checked_documents": document_names,
+            "comparisons": [],
+            "errors": [{
+                "type": "processing_error",
+                "message": f"Failed to check documents: {str(e)}",
+                "severity": "critical"
+            }],
+            "warnings": [],
+            "summary": {
+                "total_documents": 0,
+                "validated_documents": 0,
+                "failed_documents": 1,
+                "missing_documents": []
+            }
+        }
 
 
 @router.post(
