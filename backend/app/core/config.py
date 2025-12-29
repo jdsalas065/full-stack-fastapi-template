@@ -91,6 +91,17 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
 
+    # MinIO Settings
+    MINIO_ENDPOINT: str = "localhost:9000"
+    MINIO_ACCESS_KEY: str = "minioadmin"
+    MINIO_SECRET_KEY: str = "minioadmin"
+    MINIO_SECURE: bool = False
+    MINIO_BUCKET: str = "documents"
+
+    # OpenAI Settings (for LLM OCR)
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o"  # or "gpt-4-vision-preview"
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (
