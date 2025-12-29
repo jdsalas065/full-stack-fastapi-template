@@ -257,10 +257,13 @@ def compare_document_pair(
     task_id: str, excel_file_name: str, pdf_file_name: str
 ) -> dict[str, Any]:
     """
-    Compare content between an Excel file and a PDF file using pandas.
+    Compare content between an Excel file and a PDF file using OCR.
 
-    This function extracts data from both Excel and PDF files, then compares
-    their content to identify matches, mismatches, and discrepancies.
+    This function uses OCR-based comparison by:
+    1. Converting Excel to PDF
+    2. Converting both PDFs to images
+    3. Extracting text via OCR
+    4. Comparing the extracted texts
 
     Args:
         task_id: Unique identifier for the task
@@ -273,29 +276,34 @@ def compare_document_pair(
         - excel_file: Excel filename
         - pdf_file: PDF filename
         - comparison_status: success/partial/failed
-        - matches: List of matching records
-        - mismatches: List of mismatched records
-        - excel_only: Records only in Excel
-        - pdf_only: Records only in PDF
+        - comparison_method: "ocr" indicating OCR-based comparison
+        - similarity_score: Overall similarity percentage
+        - matches: List of matching text segments
+        - differences: List of differences found
+        - excel_only: Text found only in Excel
+        - pdf_only: Text found only in PDF
         - summary: Statistics about comparison
 
     Raises:
         FileNotFoundError: If files don't exist
-        ValueError: If files cannot be parsed
+        ValueError: If files cannot be processed
 
-    Example:
-        result = compare_document_pair("task-123", "invoice.xlsx", "invoice.pdf")
-
-    TODO: Implement detailed comparison logic
-    - Use pandas to read Excel file
-    - Extract tables from PDF (using tabula-py or pdfplumber)
-    - Normalize data formats (dates, amounts, etc.)
-    - Compare line items, amounts, totals
-    - Generate detailed match/mismatch report
+    Libraries used:
+        - pdf2image: Convert PDF to images
+        - openpyxl/libreoffice: Convert Excel to PDF
+        - pytesseract: OCR text extraction
     """
-    logger.info(f"Comparing documents for task {task_id}: {excel_file_name} vs {pdf_file_name}")
+    logger.info(f"Comparing documents using OCR for task {task_id}: {excel_file_name} vs {pdf_file_name}")
 
     try:
+        # Import OCR tools
+        from app.services.ocr_tools import (
+            compare_ocr_texts,
+            convert_excel_to_pdf,
+            convert_pdf_to_images,
+            extract_ocr_texts,
+        )
+
         # Get task directory
         task_dir = Path(BASE_DOCUMENT_PATH) / task_id
 
@@ -311,16 +319,17 @@ def compare_document_pair(
                 "excel_file": excel_file_name,
                 "pdf_file": pdf_file_name,
                 "comparison_status": "failed",
+                "comparison_method": "ocr",
                 "error": f"Excel file not found: {excel_file_name}",
+                "similarity_score": 0.0,
                 "matches": [],
-                "mismatches": [],
+                "differences": [],
                 "excel_only": [],
                 "pdf_only": [],
                 "summary": {
-                    "total_excel_records": 0,
-                    "total_pdf_records": 0,
-                    "matched_records": 0,
-                    "mismatched_records": 0
+                    "total_excel_pages": 0,
+                    "total_pdf_pages": 0,
+                    "comparison_note": "File not found"
                 }
             }
 
@@ -331,50 +340,66 @@ def compare_document_pair(
                 "excel_file": excel_file_name,
                 "pdf_file": pdf_file_name,
                 "comparison_status": "failed",
+                "comparison_method": "ocr",
                 "error": f"PDF file not found: {pdf_file_name}",
+                "similarity_score": 0.0,
                 "matches": [],
-                "mismatches": [],
+                "differences": [],
                 "excel_only": [],
                 "pdf_only": [],
                 "summary": {
-                    "total_excel_records": 0,
-                    "total_pdf_records": 0,
-                    "matched_records": 0,
-                    "mismatched_records": 0
+                    "total_excel_pages": 0,
+                    "total_pdf_pages": 0,
+                    "comparison_note": "File not found"
                 }
             }
-
-        # Placeholder comparison logic
-        # TODO: Implement actual pandas-based comparison
-        # Example implementation:
-        # import pandas as pd
-        # df_excel = pd.read_excel(excel_path)
-        # df_pdf = extract_pdf_table(pdf_path)  # Use tabula-py or pdfplumber
-        # comparison = compare_dataframes(df_excel, df_pdf)
 
         logger.info(f"Files found: {excel_path.name} ({excel_path.stat().st_size} bytes), "
                    f"{pdf_path.name} ({pdf_path.stat().st_size} bytes)")
 
-        # Placeholder result - replace with actual comparison
+        # Step 1: Convert Excel to PDF
+        logger.info("Step 1: Converting Excel to PDF")
+        excel_pdf_path = convert_excel_to_pdf(excel_path)
+
+        # Step 2: Convert both PDFs to images
+        logger.info("Step 2: Converting Excel PDF to images")
+        excel_images = convert_pdf_to_images(excel_pdf_path)
+
+        logger.info("Step 2: Converting original PDF to images")
+        pdf_images = convert_pdf_to_images(pdf_path)
+
+        # Step 3: Extract text from images using OCR
+        logger.info("Step 3: Extracting text from Excel images")
+        excel_texts = extract_ocr_texts(excel_images)
+
+        logger.info("Step 3: Extracting text from PDF images")
+        pdf_texts = extract_ocr_texts(pdf_images)
+
+        # Step 4: Compare the extracted texts
+        logger.info("Step 4: Comparing extracted texts")
+        comparison_result = compare_ocr_texts(excel_texts, pdf_texts)
+
+        # Build final result
         result = {
             "task_id": task_id,
             "excel_file": excel_file_name,
             "pdf_file": pdf_file_name,
             "comparison_status": "success",
-            "matches": [],
-            "mismatches": [],
-            "excel_only": [],
-            "pdf_only": [],
+            "comparison_method": "ocr",
+            "similarity_score": comparison_result.get("similarity_score", 0.0),
+            "matches": comparison_result.get("matches", []),
+            "differences": comparison_result.get("differences", []),
+            "excel_only": comparison_result.get("excel_only", []),
+            "pdf_only": comparison_result.get("pdf_only", []),
             "summary": {
-                "total_excel_records": 0,
-                "total_pdf_records": 0,
-                "matched_records": 0,
-                "mismatched_records": 0,
-                "comparison_note": "TODO: Implement pandas-based comparison logic"
+                "total_excel_pages": comparison_result.get("total_excel_pages", 0),
+                "total_pdf_pages": comparison_result.get("total_pdf_pages", 0),
+                "similarity_score": comparison_result.get("similarity_score", 0.0),
+                "comparison_note": "OCR-based comparison completed"
             }
         }
 
-        logger.info(f"Comparison completed for task {task_id}")
+        logger.info(f"OCR comparison completed for task {task_id}")
         return result
 
     except Exception as e:
@@ -667,16 +692,20 @@ async def compare_document_contents(
     """
     Compare document contents endpoint.
 
-    This endpoint handles the document comparison workflow:
-    1. Load document set from storage (if not already loaded)
-    2. Compare Excel vs PDF content using pandas
-    3. Return detailed comparison results
+    This endpoint handles the document comparison workflow using OCR:
+    1. Load document set from storage
+    2. Classify input documents (identify document types)
+    3. Compare Excel vs PDF content using OCR-based comparison
+    4. Return detailed comparison results
+
+    Workflow:
+        load_document_set => classify_input_documents => compare_document_pair
 
     Args:
         payload: Compare document request containing task_id, excel_file_name, pdf_file_name
 
     Returns:
-        CompareDocumentResponse with comparison results and status code 200
+        CompareDocumentResponse with OCR comparison results and status code 200
 
     Raises:
         HTTPException: 422 if payload validation fails (FastAPI automatic)
@@ -698,11 +727,17 @@ async def compare_document_contents(
         logger.info(f"Comparing documents - task_id: {task_id}, "
                    f"excel: {excel_file_name}, pdf: {pdf_file_name}")
 
-        # Step 1: Ensure documents are loaded
-        # Load document set if not already present
+        # Step 1: Load document set from MinIO
+        logger.info("Step 1: Loading document set from MinIO")
         await load_document_set(task_id)
 
-        # Step 2: Compare the document pair
+        # Step 2: Classify input documents (identify document types)
+        logger.info("Step 2: Classifying input documents")
+        classification_result = classify_input_documents(task_id)
+        logger.info(f"Classification result: {classification_result}")
+
+        # Step 3: Compare the document pair using OCR
+        logger.info("Step 3: Comparing document pair using OCR")
         comparison_result = compare_document_pair(task_id, excel_file_name, pdf_file_name)
 
         # Check if comparison failed
