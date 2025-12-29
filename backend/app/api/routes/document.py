@@ -15,7 +15,12 @@ from fastapi import APIRouter, HTTPException, status
 # from minio import Minio
 from app.core.constants import Tags
 from app.core.logging import get_logger
-from app.schemas.document import DocumentSubmissionRequest, DocumentSubmissionResponse
+from app.schemas.document import (
+    CompareDocumentRequest,
+    CompareDocumentResponse,
+    DocumentSubmissionRequest,
+    DocumentSubmissionResponse,
+)
 
 logger = get_logger(__name__)
 
@@ -248,6 +253,151 @@ def classify_input_documents(task_id: str) -> dict[str, Any]:
     return {"task_id": task_id, "classification": "pending"}
 
 
+def compare_document_pair(
+    task_id: str, excel_file_name: str, pdf_file_name: str
+) -> dict[str, Any]:
+    """
+    Compare content between an Excel file and a PDF file using pandas.
+
+    This function extracts data from both Excel and PDF files, then compares
+    their content to identify matches, mismatches, and discrepancies.
+
+    Args:
+        task_id: Unique identifier for the task
+        excel_file_name: Name of the Excel file to compare
+        pdf_file_name: Name of the PDF file to compare
+
+    Returns:
+        Dictionary containing comparison results with:
+        - task_id: Task identifier
+        - excel_file: Excel filename
+        - pdf_file: PDF filename
+        - comparison_status: success/partial/failed
+        - matches: List of matching records
+        - mismatches: List of mismatched records
+        - excel_only: Records only in Excel
+        - pdf_only: Records only in PDF
+        - summary: Statistics about comparison
+
+    Raises:
+        FileNotFoundError: If files don't exist
+        ValueError: If files cannot be parsed
+
+    Example:
+        result = compare_document_pair("task-123", "invoice.xlsx", "invoice.pdf")
+
+    TODO: Implement detailed comparison logic
+    - Use pandas to read Excel file
+    - Extract tables from PDF (using tabula-py or pdfplumber)
+    - Normalize data formats (dates, amounts, etc.)
+    - Compare line items, amounts, totals
+    - Generate detailed match/mismatch report
+    """
+    logger.info(f"Comparing documents for task {task_id}: {excel_file_name} vs {pdf_file_name}")
+
+    try:
+        # Get task directory
+        task_dir = Path(BASE_DOCUMENT_PATH) / task_id
+
+        # Build file paths
+        excel_path = task_dir / excel_file_name
+        pdf_path = task_dir / pdf_file_name
+
+        # Check if files exist
+        if not excel_path.exists():
+            logger.error(f"Excel file not found: {excel_path}")
+            return {
+                "task_id": task_id,
+                "excel_file": excel_file_name,
+                "pdf_file": pdf_file_name,
+                "comparison_status": "failed",
+                "error": f"Excel file not found: {excel_file_name}",
+                "matches": [],
+                "mismatches": [],
+                "excel_only": [],
+                "pdf_only": [],
+                "summary": {
+                    "total_excel_records": 0,
+                    "total_pdf_records": 0,
+                    "matched_records": 0,
+                    "mismatched_records": 0
+                }
+            }
+
+        if not pdf_path.exists():
+            logger.error(f"PDF file not found: {pdf_path}")
+            return {
+                "task_id": task_id,
+                "excel_file": excel_file_name,
+                "pdf_file": pdf_file_name,
+                "comparison_status": "failed",
+                "error": f"PDF file not found: {pdf_file_name}",
+                "matches": [],
+                "mismatches": [],
+                "excel_only": [],
+                "pdf_only": [],
+                "summary": {
+                    "total_excel_records": 0,
+                    "total_pdf_records": 0,
+                    "matched_records": 0,
+                    "mismatched_records": 0
+                }
+            }
+
+        # Placeholder comparison logic
+        # TODO: Implement actual pandas-based comparison
+        # Example implementation:
+        # import pandas as pd
+        # df_excel = pd.read_excel(excel_path)
+        # df_pdf = extract_pdf_table(pdf_path)  # Use tabula-py or pdfplumber
+        # comparison = compare_dataframes(df_excel, df_pdf)
+
+        logger.info(f"Files found: {excel_path.name} ({excel_path.stat().st_size} bytes), "
+                   f"{pdf_path.name} ({pdf_path.stat().st_size} bytes)")
+
+        # Placeholder result - replace with actual comparison
+        result = {
+            "task_id": task_id,
+            "excel_file": excel_file_name,
+            "pdf_file": pdf_file_name,
+            "comparison_status": "success",
+            "matches": [],
+            "mismatches": [],
+            "excel_only": [],
+            "pdf_only": [],
+            "summary": {
+                "total_excel_records": 0,
+                "total_pdf_records": 0,
+                "matched_records": 0,
+                "mismatched_records": 0,
+                "comparison_note": "TODO: Implement pandas-based comparison logic"
+            }
+        }
+
+        logger.info(f"Comparison completed for task {task_id}")
+        return result
+
+    except Exception as e:
+        logger.error(f"Error comparing documents for task {task_id}: {str(e)}")
+        return {
+            "task_id": task_id,
+            "excel_file": excel_file_name,
+            "pdf_file": pdf_file_name,
+            "comparison_status": "error",
+            "error": f"Comparison failed: {str(e)}",
+            "matches": [],
+            "mismatches": [],
+            "excel_only": [],
+            "pdf_only": [],
+            "summary": {
+                "total_excel_records": 0,
+                "total_pdf_records": 0,
+                "matched_records": 0,
+                "mismatched_records": 0
+            }
+        }
+
+
 def check_documents(task_id: str, document_names: dict[str, Any]) -> dict[str, Any]:
     """
     Check, compare and aggregate results between financial document types.
@@ -392,7 +542,7 @@ def check_documents(task_id: str, document_names: dict[str, Any]) -> dict[str, A
         # Determine overall validation status
         validation_status = "success"
         failed_documents = 0
-        
+
         if errors:
             validation_status = "failed"
             failed_documents = len(errors)
@@ -501,4 +651,92 @@ async def process_document_submission(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Document processing failed: {str(e)}"
+        )
+
+
+@router.post(
+    "/compare_document_contents",
+    response_model=CompareDocumentResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Compare document contents",
+    description="Compare content between an Excel file and a PDF file for a specific task."
+)
+async def compare_document_contents(
+    payload: CompareDocumentRequest
+) -> CompareDocumentResponse:
+    """
+    Compare document contents endpoint.
+
+    This endpoint handles the document comparison workflow:
+    1. Load document set from storage (if not already loaded)
+    2. Compare Excel vs PDF content using pandas
+    3. Return detailed comparison results
+
+    Args:
+        payload: Compare document request containing task_id, excel_file_name, pdf_file_name
+
+    Returns:
+        CompareDocumentResponse with comparison results and status code 200
+
+    Raises:
+        HTTPException: 422 if payload validation fails (FastAPI automatic)
+        HTTPException: 404 if files not found
+        HTTPException: 500 if comparison fails
+
+    Note:
+        FastAPI automatically validates JSON content-type and returns 422
+        for invalid JSON or non-JSON content.
+    """
+    logger.info(f"Received compare request: {payload.model_dump()}")
+
+    try:
+        # Extract parameters from payload
+        task_id = payload.task_id.strip()
+        excel_file_name = payload.excel_file_name.strip()
+        pdf_file_name = payload.pdf_file_name.strip()
+
+        logger.info(f"Comparing documents - task_id: {task_id}, "
+                   f"excel: {excel_file_name}, pdf: {pdf_file_name}")
+
+        # Step 1: Ensure documents are loaded
+        # Load document set if not already present
+        await load_document_set(task_id)
+
+        # Step 2: Compare the document pair
+        comparison_result = compare_document_pair(task_id, excel_file_name, pdf_file_name)
+
+        # Check if comparison failed
+        if comparison_result.get("comparison_status") == "failed":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=comparison_result.get("error", "Files not found")
+            )
+
+        if comparison_result.get("comparison_status") == "error":
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=comparison_result.get("error", "Comparison failed")
+            )
+
+        # Return successful comparison result
+        return CompareDocumentResponse(
+            status="compared",
+            result=comparison_result
+        )
+
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except ValueError as e:
+        # Handle validation errors
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid payload: {str(e)}"
+        )
+    except Exception as e:
+        # Handle unexpected errors
+        logger.error(f"Unexpected error in compare_document_contents: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Document comparison failed: {str(e)}"
         )

@@ -8,6 +8,17 @@ Example:
 """
 
 from app.schemas.common import Message
-from app.schemas.document import DocumentSubmissionRequest, DocumentSubmissionResponse
+from app.schemas.document import (
+    CompareDocumentRequest,
+    CompareDocumentResponse,
+    DocumentSubmissionRequest,
+    DocumentSubmissionResponse,
+)
 
-__all__ = ["Message", "DocumentSubmissionRequest", "DocumentSubmissionResponse"]
+__all__ = [
+    "Message",
+    "DocumentSubmissionRequest",
+    "DocumentSubmissionResponse",
+    "CompareDocumentRequest",
+    "CompareDocumentResponse",
+]

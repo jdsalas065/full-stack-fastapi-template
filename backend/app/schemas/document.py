@@ -20,3 +20,18 @@ class DocumentSubmissionResponse(BaseModel):
 
     status: str = Field(..., description="Processing status")
     result: dict[str, Any] = Field(default_factory=dict, description="Processing results from document checks")
+
+
+class CompareDocumentRequest(BaseModel):
+    """Request schema for document comparison."""
+
+    task_id: str = Field(..., description="Unique identifier for the task")
+    excel_file_name: str = Field(..., description="Name of the Excel file to compare")
+    pdf_file_name: str = Field(..., description="Name of the PDF file to compare")
+
+
+class CompareDocumentResponse(BaseModel):
+    """Response schema for document comparison."""
+
+    status: str = Field(..., description="Comparison status")
+    result: dict[str, Any] = Field(default_factory=dict, description="Comparison results")
