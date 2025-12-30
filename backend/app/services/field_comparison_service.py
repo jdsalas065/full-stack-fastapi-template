@@ -52,26 +52,32 @@ class FieldComparisonService:
             field_values = []
             for doc in document_results:
                 field_value = doc.get("fields", {}).get(field_name, [])
-                field_values.append({
-                    "file_name": doc["file_name"],
-                    "value": field_value,
-                })
+                field_values.append(
+                    {
+                        "file_name": doc["file_name"],
+                        "value": field_value,
+                    }
+                )
 
             # Compare field values
             comparison = self._compare_field(field_name, field_values)
             field_comparisons[field_name] = comparison
 
             if comparison["status"] == "match":
-                matches.append({
-                    "field": field_name,
-                    "values": field_values,
-                })
+                matches.append(
+                    {
+                        "field": field_name,
+                        "values": field_values,
+                    }
+                )
             else:
-                differences.append({
-                    "field": field_name,
-                    "values": field_values,
-                    "difference_type": comparison["difference_type"],
-                })
+                differences.append(
+                    {
+                        "field": field_name,
+                        "values": field_values,
+                        "difference_type": comparison["difference_type"],
+                    }
+                )
 
         return {
             "field_comparisons": field_comparisons,
@@ -104,7 +110,7 @@ class FieldComparisonService:
         normalized_values = [self._normalize_value(v) for v in values]
 
         # Check if all values are the same
-        if len(set(str(v) for v in normalized_values)) == 1:
+        if len({str(v) for v in normalized_values}) == 1:
             return {
                 "status": "match",
                 "values": field_values,
@@ -167,4 +173,3 @@ class FieldComparisonService:
 
 # Singleton instance
 field_comparison_service = FieldComparisonService()
-

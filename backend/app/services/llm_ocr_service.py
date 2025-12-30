@@ -159,9 +159,7 @@ class LLMOCRService:
         Returns:
             List of extraction results, one per image
         """
-        tasks = [
-            self.extract_text_from_image(img, extract_fields) for img in images
-        ]
+        tasks = [self.extract_text_from_image(img, extract_fields) for img in images]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -170,13 +168,15 @@ class LLMOCRService:
         for idx, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.error(f"Error extracting from image {idx}: {result}")
-                extracted_results.append({
-                    "page_num": idx,
-                    "text": "",
-                    "fields": {},
-                    "confidence": 0.0,
-                    "error": str(result),
-                })
+                extracted_results.append(
+                    {
+                        "page_num": idx,
+                        "text": "",
+                        "fields": {},
+                        "confidence": 0.0,
+                        "error": str(result),
+                    }
+                )
             else:
                 result["page_num"] = idx
                 extracted_results.append(result)
@@ -186,4 +186,3 @@ class LLMOCRService:
 
 # Singleton instance
 llm_ocr_service = LLMOCRService()
-

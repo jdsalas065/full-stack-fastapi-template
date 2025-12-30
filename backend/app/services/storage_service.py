@@ -250,4 +250,3 @@ class StorageService:
 
 # Singleton instance
 storage_service = StorageService()
-

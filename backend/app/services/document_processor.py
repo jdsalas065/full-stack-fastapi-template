@@ -10,12 +10,12 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
 import fitz  # PyMuPDF
+import pandas as pd
 from PIL import Image
 
-from app.services.llm_ocr_service import llm_ocr_service
 from app.core.logging import get_logger
+from app.services.llm_ocr_service import llm_ocr_service
 
 logger = get_logger(__name__)
 
@@ -140,6 +140,7 @@ class DocumentProcessor:
         Returns:
             Dictionary with extracted data and fields
         """
+
         # Read Excel (blocking operation, run in thread)
         def read_excel():
             file_stream.seek(0)
@@ -226,6 +227,7 @@ class DocumentProcessor:
         Returns:
             Dictionary with extracted data and fields
         """
+
         # Convert PDF to images (blocking, run in thread)
         def pdf_to_images():
             file_stream.seek(0)
@@ -235,9 +237,7 @@ class DocumentProcessor:
             for page_num in range(len(doc)):
                 page = doc[page_num]
                 pix = page.get_pixmap(dpi=200)  # 200 DPI for good quality
-                img = Image.frombytes(
-                    "RGB", [pix.width, pix.height], pix.samples
-                )
+                img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
                 images.append(img)
             doc.close()
             return images
@@ -253,9 +253,7 @@ class DocumentProcessor:
 
         # Combine results from all pages
         full_text = "\n\n".join([r["text"] for r in ocr_results])
-        combined_fields = self._combine_fields(
-            [r["fields"] for r in ocr_results]
-        )
+        combined_fields = self._combine_fields([r["fields"] for r in ocr_results])
 
         return {
             "file_name": file_name,
@@ -408,7 +406,7 @@ class DocumentProcessor:
         }
 
         # Extract from all sheets
-        for sheet_name, records in sheets_data.items():
+        for _sheet_name, records in sheets_data.items():
             for record in records:
                 # Simple field extraction (can be enhanced with LLM)
                 for key, value in record.items():
@@ -419,9 +417,7 @@ class DocumentProcessor:
 
         return fields
 
-    def _combine_fields(
-        self, fields_list: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def _combine_fields(self, fields_list: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Combine fields from multiple pages.
 
@@ -445,9 +441,7 @@ class DocumentProcessor:
 
         return combined
 
-    def _excel_to_text(
-        self, sheets_data: dict[str, list[dict[str, Any]]]
-    ) -> str:
+    def _excel_to_text(self, sheets_data: dict[str, list[dict[str, Any]]]) -> str:
         """
         Convert Excel data to text representation.
 
@@ -467,4 +461,3 @@ class DocumentProcessor:
 
 # Singleton instance
 document_processor = DocumentProcessor()
-
