@@ -5,6 +5,7 @@ Database-backed CRUD operations for file metadata.
 """
 
 from datetime import datetime
+from typing import Any
 
 from sqlmodel import Session, select
 
@@ -100,7 +101,7 @@ def delete(*, session: Session, file_id: str) -> bool:
     return False
 
 
-def update(*, session: Session, file_id: str, **kwargs: str | int) -> File | None:
+def update(*, session: Session, file_id: str, **kwargs: Any) -> File | None:
     """
     Update file metadata.
 
