@@ -2,12 +2,13 @@
 Document processing routes.
 
 Implements document processing and comparison endpoints using:
-- MinIO streaming for file access
+- MinIO temp file download for file access
 - LLM OCR for PDF processing
 - Field extraction and comparison
 """
 
 import asyncio
+import os
 from datetime import datetime
 from typing import Any
 
@@ -48,7 +49,7 @@ async def process_document_submission(
     Process document submission with field extraction and comparison.
 
     Flow:
-    1. Load files from MinIO (streaming)
+    1. Load files from MinIO (download to temp)
     2. Process each file (Excel parsing or LLM OCR for PDF)
     3. Extract structured fields
     4. Compare fields across documents
@@ -78,24 +79,36 @@ async def process_document_submission(
 
         logger.info(f"Processing {len(files)} files for task {task_id}")
 
-        # Step 2: Process files in parallel (streaming from MinIO)
+        # Step 2: Process files in parallel (download to temp first)
         processing_tasks = []
+        temp_files = []
         for file_info in files:
             # Skip OCR results file if present
             if file_info["name"].endswith("ocr_results.json"):
                 continue
 
-            file_stream = await storage_service.get_file_stream(file_info["name"])
-            task = document_processor.process_file(
-                file_stream,
+            # Download file to temp
+            temp_path = await storage_service.download_file_to_temp(file_info["name"])
+            temp_files.append(temp_path)
+            
+            task = document_processor.process_file_from_path(
+                temp_path,
                 file_info["name"],
             )
             processing_tasks.append(task)
 
         # Wait for all processing to complete
-        document_results = await asyncio.gather(
-            *processing_tasks, return_exceptions=True
-        )
+        try:
+            document_results = await asyncio.gather(
+                *processing_tasks, return_exceptions=True
+            )
+        finally:
+            # Clean up temp files
+            for temp_path in temp_files:
+                try:
+                    os.unlink(temp_path)
+                except Exception as e:
+                    logger.warning(f"Failed to delete temp file {temp_path}: {e}")
 
         # Handle errors
         valid_results = []
@@ -171,7 +184,7 @@ async def compare_document_contents(
     Compare Excel and PDF documents using LLM OCR.
 
     Flow:
-    1. Load files from MinIO (streaming)
+    1. Load files from MinIO (download to temp)
     2. Process Excel (parse) and PDF (LLM OCR)
     3. Extract fields from both
     4. Compare field-by-field
@@ -197,40 +210,51 @@ async def compare_document_contents(
             f"excel: {excel_file_name}, pdf: {pdf_file_name}"
         )
 
-        # Step 1: Load files (streaming)
+        # Step 1: Load files (download to temp)
         excel_object_name = f"{task_id}/{excel_file_name}"
         pdf_object_name = f"{task_id}/{pdf_file_name}"
 
-        excel_stream = await storage_service.get_file_stream(excel_object_name)
-        pdf_stream = await storage_service.get_file_stream(pdf_object_name)
+        excel_temp_path = await storage_service.download_file_to_temp(excel_object_name)
+        pdf_temp_path = await storage_service.download_file_to_temp(pdf_object_name)
 
-        # Step 2: Process files in parallel
-        excel_result, pdf_result = await asyncio.gather(
-            document_processor.process_file(excel_stream, excel_file_name, "excel"),
-            document_processor.process_file(pdf_stream, pdf_file_name, "pdf"),
-        )
+        try:
+            # Step 2: Process files in parallel
+            excel_result, pdf_result = await asyncio.gather(
+                document_processor.process_file_from_path(excel_temp_path, excel_file_name, "excel"),
+                document_processor.process_file_from_path(pdf_temp_path, pdf_file_name, "pdf"),
+            )
 
-        # Step 3: Compare
-        comparison = field_comparison_service.compare_documents([
-            excel_result,
-            pdf_result,
-        ])
+            # Step 3: Compare
+            comparison = field_comparison_service.compare_documents([
+                excel_result,
+                pdf_result,
+            ])
 
-        # Step 4: Save OCR results
-        ocr_results = {
-            "task_id": task_id,
-            "excel_result": excel_result,
-            "pdf_result": pdf_result,
-            "comparison": comparison,
-            "processed_at": datetime.utcnow().isoformat(),
-        }
+            # Step 4: Save OCR results
+            ocr_results = {
+                "task_id": task_id,
+                "excel_result": excel_result,
+                "pdf_result": pdf_result,
+                "comparison": comparison,
+                "processed_at": datetime.utcnow().isoformat(),
+            }
 
-        await storage_service.save_ocr_result(task_id, ocr_results)
+            await storage_service.save_ocr_result(task_id, ocr_results)
 
-        return CompareDocumentResponse(
-            status="compared",
-            result=comparison,
-        )
+            return CompareDocumentResponse(
+                status="compared",
+                result=comparison,
+            )
+        finally:
+            # Clean up temp files
+            try:
+                os.unlink(excel_temp_path)
+            except Exception as e:
+                logger.warning(f"Failed to delete temp file {excel_temp_path}: {e}")
+            try:
+                os.unlink(pdf_temp_path)
+            except Exception as e:
+                logger.warning(f"Failed to delete temp file {pdf_temp_path}: {e}")
 
     except HTTPException:
         raise
