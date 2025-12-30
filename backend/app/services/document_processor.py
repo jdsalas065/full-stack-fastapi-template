@@ -31,6 +31,8 @@ class DocumentProcessor:
     ) -> dict[str, Any]:
         """
         Process a single file and extract structured data.
+        
+        DEPRECATED: Use process_file_from_path instead.
 
         Args:
             file_stream: File content as BytesIO
@@ -56,6 +58,46 @@ class DocumentProcessor:
         else:
             raise ValueError(f"Unsupported file type: {file_type}")
 
+    async def process_file_from_path(
+        self,
+        file_path: str,
+        file_name: str | None = None,
+        file_type: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        Process a single file from local path and extract structured data.
+
+        Args:
+            file_path: Path to local file
+            file_name: Original file name (use Path basename if None)
+            file_type: 'excel', 'pdf', 'doc', 'docx', or 'image' (auto-detect if None)
+
+        Returns:
+            Dictionary with:
+            - file_name
+            - file_type
+            - extracted_data: Structured data
+            - text: Full text content
+            - fields: Extracted fields
+        """
+        if file_name is None:
+            file_name = Path(file_path).name
+            
+        # Auto-detect file type
+        if file_type is None:
+            file_type = self._detect_file_type(file_name)
+
+        if file_type == "excel":
+            return await self._process_excel_from_path(file_path, file_name)
+        elif file_type == "pdf":
+            return await self._process_pdf_from_path(file_path, file_name)
+        elif file_type in ["doc", "docx"]:
+            return await self._process_doc_from_path(file_path, file_name)
+        elif file_type == "image":
+            return await self._process_image_from_path(file_path, file_name)
+        else:
+            raise ValueError(f"Unsupported file type: {file_type}")
+
     def _detect_file_type(self, file_name: str) -> str:
         """
         Detect file type from extension.
@@ -64,7 +106,7 @@ class DocumentProcessor:
             file_name: File name with extension
 
         Returns:
-            'excel' or 'pdf'
+            'excel', 'pdf', 'doc', 'docx', or 'image'
 
         Raises:
             ValueError: If file type cannot be detected
@@ -74,6 +116,10 @@ class DocumentProcessor:
             return "excel"
         elif ext == ".pdf":
             return "pdf"
+        elif ext in [".doc", ".docx"]:
+            return "docx"
+        elif ext in [".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".gif"]:
+            return "image"
         else:
             raise ValueError(f"Cannot detect file type for: {file_name}")
 
@@ -84,6 +130,8 @@ class DocumentProcessor:
     ) -> dict[str, Any]:
         """
         Process Excel file and extract structured data.
+        
+        DEPRECATED: Use _process_excel_from_path instead.
 
         Args:
             file_stream: Excel file content as BytesIO
@@ -120,6 +168,47 @@ class DocumentProcessor:
             "fields": fields,
         }
 
+    async def _process_excel_from_path(
+        self,
+        file_path: str,
+        file_name: str,
+    ) -> dict[str, Any]:
+        """
+        Process Excel file from path and extract structured data.
+
+        Args:
+            file_path: Path to Excel file
+            file_name: Original file name
+
+        Returns:
+            Dictionary with extracted data and fields
+        """
+        # Read Excel (blocking operation, run in thread)
+        def read_excel():
+            try:
+                excel_file = pd.ExcelFile(file_path, engine="openpyxl")
+                sheets_data = {}
+                for sheet_name in excel_file.sheet_names:
+                    df = pd.read_excel(excel_file, sheet_name=sheet_name)
+                    sheets_data[sheet_name] = df.to_dict("records")
+                return sheets_data
+            except Exception as e:
+                logger.error(f"Error reading Excel from {file_path}: {e}")
+                raise
+
+        sheets_data = await asyncio.to_thread(read_excel)
+
+        # Extract fields from structured data
+        fields = self._extract_fields_from_excel(sheets_data)
+
+        return {
+            "file_name": file_name,
+            "file_type": "excel",
+            "extracted_data": sheets_data,
+            "text": self._excel_to_text(sheets_data),
+            "fields": fields,
+        }
+
     async def _process_pdf(
         self,
         file_stream: BytesIO,
@@ -127,6 +216,8 @@ class DocumentProcessor:
     ) -> dict[str, Any]:
         """
         Process PDF file using LLM OCR.
+        
+        DEPRECATED: Use _process_pdf_from_path instead.
 
         Args:
             file_stream: PDF file content as BytesIO
@@ -173,6 +264,126 @@ class DocumentProcessor:
             "text": full_text,
             "fields": combined_fields,
             "page_count": len(images),
+        }
+
+    async def _process_pdf_from_path(
+        self,
+        file_path: str,
+        file_name: str,
+    ) -> dict[str, Any]:
+        """
+        Process PDF file from path using LLM OCR.
+
+        Args:
+            file_path: Path to PDF file
+            file_name: Original file name
+
+        Returns:
+            Dictionary with extracted data and fields
+        """
+        # Convert PDF to images (blocking, run in thread)
+        def pdf_to_images():
+            doc = fitz.open(file_path)
+            images = []
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                pix = page.get_pixmap(dpi=200)  # 200 DPI for good quality
+                img = Image.frombytes(
+                    "RGB", [pix.width, pix.height], pix.samples
+                )
+                images.append(img)
+            doc.close()
+            return images
+
+        images = await asyncio.to_thread(pdf_to_images)
+        logger.info(f"Converted PDF to {len(images)} images")
+
+        # Extract text and fields using LLM OCR
+        ocr_results = await llm_ocr_service.extract_from_images(
+            images,
+            extract_fields=True,
+        )
+
+        # Combine results from all pages
+        full_text = "\n\n".join([r["text"] for r in ocr_results])
+        combined_fields = self._combine_fields(
+            [r["fields"] for r in ocr_results]
+        )
+
+        return {
+            "file_name": file_name,
+            "file_type": "pdf",
+            "extracted_data": ocr_results,
+            "text": full_text,
+            "fields": combined_fields,
+            "page_count": len(images),
+        }
+
+    async def _process_doc_from_path(
+        self,
+        file_path: str,
+        file_name: str,
+    ) -> dict[str, Any]:
+        """
+        Process DOC/DOCX file from path.
+        
+        Note: Basic implementation. For production, consider python-docx library.
+
+        Args:
+            file_path: Path to DOC/DOCX file
+            file_name: Original file name
+
+        Returns:
+            Dictionary with extracted data and fields
+        """
+        # For now, treat as unsupported - would need python-docx
+        logger.warning(f"DOC/DOCX processing not fully implemented for {file_name}")
+        return {
+            "file_name": file_name,
+            "file_type": "docx",
+            "extracted_data": {},
+            "text": "",
+            "fields": {},
+            "note": "DOC/DOCX processing requires additional library (python-docx)",
+        }
+
+    async def _process_image_from_path(
+        self,
+        file_path: str,
+        file_name: str,
+    ) -> dict[str, Any]:
+        """
+        Process image file from path using LLM OCR.
+
+        Args:
+            file_path: Path to image file
+            file_name: Original file name
+
+        Returns:
+            Dictionary with extracted data and fields
+        """
+        # Load image (blocking, run in thread)
+        def load_image():
+            return Image.open(file_path).convert("RGB")
+
+        image = await asyncio.to_thread(load_image)
+        logger.info(f"Loaded image {file_name}")
+
+        # Extract text and fields using LLM OCR
+        ocr_results = await llm_ocr_service.extract_from_images(
+            [image],
+            extract_fields=True,
+        )
+
+        # Get first result (single image)
+        result = ocr_results[0] if ocr_results else {"text": "", "fields": {}}
+
+        return {
+            "file_name": file_name,
+            "file_type": "image",
+            "extracted_data": result,
+            "text": result.get("text", ""),
+            "fields": result.get("fields", {}),
         }
 
     def _extract_fields_from_excel(
