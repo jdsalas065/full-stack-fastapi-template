@@ -2,10 +2,8 @@
 
 import logging
 from datetime import timedelta
-from pathlib import Path
 
 import jwt
-from jinja2 import Template
 
 from app.core.config import settings
 from app.core.security import ALGORITHM
@@ -16,26 +14,26 @@ logger = logging.getLogger(__name__)
 def generate_password_reset_token(email: str) -> str:
     """
     Generate a password reset token.
-    
+
     Args:
         email: User email address
-        
+
     Returns:
         JWT token for password reset
     """
     delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
     from app.core.security import create_access_token
-    
+
     return create_access_token(subject=email, expires_delta=delta)
 
 
 def verify_password_reset_token(token: str) -> str | None:
     """
     Verify a password reset token.
-    
+
     Args:
         token: JWT token to verify
-        
+
     Returns:
         Email address from token if valid, None otherwise
     """
@@ -54,7 +52,7 @@ def send_email(
 ) -> None:
     """
     Send an email.
-    
+
     Args:
         email_to: Recipient email address
         subject: Email subject
@@ -66,33 +64,38 @@ def send_email(
             f"Email not sent to {email_to} - SMTP not configured. Subject: {subject}"
         )
         return
-    
+
     # Import here to avoid issues when SMTP is not configured
     import smtplib
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
-    
+
     try:
         message = MIMEMultipart()
         message["From"] = str(settings.EMAILS_FROM_EMAIL)
         message["To"] = email_to
         message["Subject"] = subject
-        
+
         message.attach(MIMEText(html_content, "html"))
-        
+
+        smtp_host = settings.SMTP_HOST
+        if not smtp_host:
+            logger.error("SMTP_HOST is not configured")
+            return
+
         if settings.SMTP_SSL:
-            server = smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT)
+            server = smtplib.SMTP_SSL(smtp_host, settings.SMTP_PORT)
         else:
-            server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT)
+            server = smtplib.SMTP(smtp_host, settings.SMTP_PORT)
             if settings.SMTP_TLS:
                 server.starttls()
-        
+
         if settings.SMTP_USER and settings.SMTP_PASSWORD:
             server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-        
+
         server.send_message(message)
         server.quit()
-        
+
         logger.info(f"Email sent to {email_to}")
     except Exception as e:
         logger.error(f"Failed to send email to {email_to}: {e}")
@@ -101,7 +104,7 @@ def send_email(
 def send_reset_password_email(email_to: str, email: str, token: str) -> None:
     """
     Send password reset email.
-    
+
     Args:
         email_to: Recipient email address
         email: User email for the reset link
@@ -109,9 +112,9 @@ def send_reset_password_email(email_to: str, email: str, token: str) -> None:
     """
     project_name = settings.PROJECT_NAME
     subject = f"{project_name} - Password recovery for user {email}"
-    
+
     link = f"{settings.FRONTEND_HOST}/reset-password?token={token}"
-    
+
     html_content = f"""
     <html>
         <body>
@@ -124,21 +127,21 @@ def send_reset_password_email(email_to: str, email: str, token: str) -> None:
         </body>
     </html>
     """
-    
+
     send_email(email_to=email_to, subject=subject, html_content=html_content)
 
 
 def send_new_account_email(email_to: str, username: str) -> None:
     """
     Send new account email.
-    
+
     Args:
         email_to: Recipient email address
         username: Username for the new account
     """
     project_name = settings.PROJECT_NAME
     subject = f"{project_name} - New account for user {username}"
-    
+
     html_content = f"""
     <html>
         <body>
@@ -149,5 +152,5 @@ def send_new_account_email(email_to: str, username: str) -> None:
         </body>
     </html>
     """
-    
+
     send_email(email_to=email_to, subject=subject, html_content=html_content)

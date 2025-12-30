@@ -9,7 +9,6 @@ Implements document processing and comparison endpoints using:
 
 import asyncio
 from datetime import datetime
-from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 
@@ -115,9 +114,7 @@ async def process_document_submission(
             )
 
         # Step 3: Compare fields
-        comparison_result = field_comparison_service.compare_documents(
-            valid_results
-        )
+        comparison_result = field_comparison_service.compare_documents(valid_results)
 
         # Step 4: Save OCR results to MinIO
         ocr_results = {
@@ -160,8 +157,7 @@ async def process_document_submission(
     status_code=status.HTTP_200_OK,
     summary="Compare document contents",
     description=(
-        "Compare Excel and PDF documents using LLM OCR "
-        "and extract field differences."
+        "Compare Excel and PDF documents using LLM OCR and extract field differences."
     ),
 )
 async def compare_document_contents(
@@ -211,10 +207,12 @@ async def compare_document_contents(
         )
 
         # Step 3: Compare
-        comparison = field_comparison_service.compare_documents([
-            excel_result,
-            pdf_result,
-        ])
+        comparison = field_comparison_service.compare_documents(
+            [
+                excel_result,
+                pdf_result,
+            ]
+        )
 
         # Step 4: Save OCR results
         ocr_results = {

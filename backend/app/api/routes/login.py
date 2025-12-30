@@ -11,7 +11,11 @@ from app.core.config import settings
 from app.core.security import create_access_token
 from app.crud import user as user_crud
 from app.schemas.user import Message, NewPassword, Token, UserPublic
-from app.utils.email import generate_password_reset_token, send_reset_password_email, verify_password_reset_token
+from app.utils.email import (
+    generate_password_reset_token,
+    send_reset_password_email,
+    verify_password_reset_token,
+)
 
 router = APIRouter(tags=["login"])
 
@@ -36,12 +40,10 @@ def login_access_token(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user",
         )
-    
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return Token(
-        access_token=create_access_token(
-            user.email, expires_delta=access_token_expires
-        )
+        access_token=create_access_token(user.email, expires_delta=access_token_expires)
     )
 
 
@@ -65,7 +67,7 @@ def recover_password(email: str, session: SessionDep) -> Message:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="The user with this email does not exist in the system.",
         )
-    
+
     password_reset_token = generate_password_reset_token(email=email)
     send_reset_password_email(
         email_to=user.email, email=email, token=password_reset_token
@@ -96,8 +98,10 @@ def reset_password(session: SessionDep, body: NewPassword) -> Message:
             detail="Inactive user",
         )
     from app.schemas.user import UserUpdate
-    
-    user_crud.update_user(session=session, db_user=user, user_in=UserUpdate(password=body.new_password))
+
+    user_crud.update_user(
+        session=session, db_user=user, user_in=UserUpdate(password=body.new_password)
+    )
     return Message(message="Password updated successfully")
 
 
@@ -114,9 +118,9 @@ def recover_password_html_content(email: str, session: SessionDep) -> str:
             detail="The user with this username does not exist in the system.",
         )
     password_reset_token = generate_password_reset_token(email=email)
-    
+
     reset_link = f"{settings.FRONTEND_HOST}/reset-password?token={password_reset_token}"
-    
+
     html_content = f"""
     <html>
         <body>
@@ -128,5 +132,5 @@ def recover_password_html_content(email: str, session: SessionDep) -> str:
         </body>
     </html>
     """
-    
+
     return html_content

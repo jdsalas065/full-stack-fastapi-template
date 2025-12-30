@@ -1,7 +1,5 @@
 """CRUD operations for User model."""
 
-from typing import Any
-
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
@@ -12,11 +10,11 @@ from app.schemas.user import UserCreate, UserUpdate
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     """
     Create a new user.
-    
+
     Args:
         session: Database session
         user_create: User creation data
-        
+
     Returns:
         Created user instance
     """
@@ -36,24 +34,24 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
 def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> User:
     """
     Update a user.
-    
+
     Args:
         session: Database session
         db_user: Existing user from database
         user_in: User update data
-        
+
     Returns:
         Updated user instance
     """
     user_data = user_in.model_dump(exclude_unset=True)
     extra_data = {}
-    
+
     if "password" in user_data:
         password = user_data["password"]
         hashed_password = get_password_hash(password)
         extra_data["hashed_password"] = hashed_password
         del user_data["password"]
-    
+
     db_user.sqlmodel_update(user_data, update=extra_data)
     session.add(db_user)
     session.commit()
@@ -64,11 +62,11 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> User
 def get_user_by_email(*, session: Session, email: str) -> User | None:
     """
     Get a user by email.
-    
+
     Args:
         session: Database session
         email: User email address
-        
+
     Returns:
         User instance if found, None otherwise
     """
@@ -79,11 +77,11 @@ def get_user_by_email(*, session: Session, email: str) -> User | None:
 def get_user_by_id(*, session: Session, user_id: str) -> User | None:
     """
     Get a user by ID.
-    
+
     Args:
         session: Database session
         user_id: User ID
-        
+
     Returns:
         User instance if found, None otherwise
     """
@@ -93,12 +91,12 @@ def get_user_by_id(*, session: Session, user_id: str) -> User | None:
 def authenticate(*, session: Session, email: str, password: str) -> User | None:
     """
     Authenticate a user.
-    
+
     Args:
         session: Database session
         email: User email
         password: Plain text password
-        
+
     Returns:
         User instance if authentication successful, None otherwise
     """
@@ -115,28 +113,28 @@ def get_users(
 ) -> tuple[list[User], int]:
     """
     Get list of users with pagination.
-    
+
     Args:
         session: Database session
         skip: Number of records to skip
         limit: Maximum number of records to return
-        
+
     Returns:
         Tuple of (list of users, total count)
     """
     count_statement = select(User)
     count = len(session.exec(count_statement).all())
-    
+
     statement = select(User).offset(skip).limit(limit)
     users = session.exec(statement).all()
-    
+
     return list(users), count
 
 
 def delete_user(*, session: Session, user_id: str) -> None:
     """
     Delete a user.
-    
+
     Args:
         session: Database session
         user_id: User ID to delete

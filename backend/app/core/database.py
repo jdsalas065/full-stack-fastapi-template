@@ -20,7 +20,7 @@ engine = create_engine(
 def get_session() -> Generator[Session, None, None]:
     """
     Dependency to get database session.
-    
+
     Yields a SQLModel Session that automatically commits on success
     or rolls back on exception.
     """
@@ -31,14 +31,14 @@ def get_session() -> Generator[Session, None, None]:
 def init_db() -> None:
     """
     Initialize database by creating all tables.
-    
+
     WARNING: This should only be used in development.
     In production, use Alembic migrations instead.
     """
     from sqlmodel import SQLModel
-    
+
     # Import all models here to ensure they are registered with SQLModel
     from app.models.item import Item  # noqa: F401
     from app.models.user import User  # noqa: F401
-    
+
     SQLModel.metadata.create_all(engine)

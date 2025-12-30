@@ -17,21 +17,17 @@ Organization:
 - field_comparison_service.py: Field extraction and comparison
 """
 
-from app.services.field_comparison_service import (
-    field_comparison_service,
-    FieldComparisonService,
-)
 from app.services.document_processor import (
-    document_processor,
     DocumentProcessor,
+    document_processor,
+)
+from app.services.field_comparison_service import (
+    FieldComparisonService,
+    field_comparison_service,
 )
 from app.services.llm_ocr_service import (
-    llm_ocr_service,
     LLMOCRService,
-)
-from app.services.storage_service import (
-    storage_service,
-    StorageService,
+    llm_ocr_service,
 )
 from app.services.ocr_tools import (
     base64_encode_image,
@@ -39,6 +35,10 @@ from app.services.ocr_tools import (
     convert_pdf_to_images,
     encode_image,
     extract_ocr_texts,
+)
+from app.services.storage_service import (
+    StorageService,
+    storage_service,
 )
 
 __all__ = [

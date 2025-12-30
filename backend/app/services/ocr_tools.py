@@ -65,7 +65,7 @@ def convert_excel_to_pdf(excel_path: Path) -> Path:
         raise FileNotFoundError(f"Excel file not found: {excel_path}")
 
     # Generate output path
-    pdf_path = excel_path.with_suffix('.converted.pdf')
+    pdf_path = excel_path.with_suffix(".converted.pdf")
 
     try:
         # TODO: Implement conversion
@@ -77,7 +77,9 @@ def convert_excel_to_pdf(excel_path: Path) -> Path:
         # ], check=True)
 
         # Placeholder - just return expected path
-        logger.warning(f"Excel to PDF conversion not implemented - returning expected path: {pdf_path}")
+        logger.warning(
+            f"Excel to PDF conversion not implemented - returning expected path: {pdf_path}"
+        )
         return pdf_path
 
     except Exception as e:
@@ -124,7 +126,9 @@ def convert_pdf_to_images(pdf_path: Path, dpi: int = 200) -> list[Image.Image]:
         # return images
 
         # Placeholder - return empty list
-        logger.warning("PDF to images conversion not implemented - returning empty list")
+        logger.warning(
+            "PDF to images conversion not implemented - returning empty list"
+        )
         return []
 
     except Exception as e:
@@ -149,7 +153,7 @@ def encode_image(image: Image.Image) -> bytes:
         image_bytes = encode_image(image)
     """
     buffer = io.BytesIO()
-    image.save(buffer, format='PNG')
+    image.save(buffer, format="PNG")
     return buffer.getvalue()
 
 
@@ -171,7 +175,7 @@ def base64_encode_image(image: Image.Image) -> str:
         # Use in JSON: {"image": b64_string}
     """
     image_bytes = encode_image(image)
-    return base64.b64encode(image_bytes).decode('utf-8')
+    return base64.b64encode(image_bytes).decode("utf-8")
 
 
 def extract_ocr_texts(images: list[Image.Image]) -> list[dict[str, Any]]:
@@ -219,14 +223,13 @@ def extract_ocr_texts(images: list[Image.Image]) -> list[dict[str, Any]]:
 
         # Placeholder
         for idx, _ in enumerate(images):
-            results.append({
-                "page_num": idx,
-                "text": "",
-                "confidence": 0.0,
-                "words": []
-            })
+            results.append(
+                {"page_num": idx, "text": "", "confidence": 0.0, "words": []}
+            )
 
-        logger.warning("OCR text extraction not implemented - returning placeholder results")
+        logger.warning(
+            "OCR text extraction not implemented - returning placeholder results"
+        )
         return results
 
     except Exception as e:
@@ -235,8 +238,7 @@ def extract_ocr_texts(images: list[Image.Image]) -> list[dict[str, Any]]:
 
 
 def compare_ocr_texts(
-    excel_texts: list[dict[str, Any]],
-    pdf_texts: list[dict[str, Any]]
+    excel_texts: list[dict[str, Any]], pdf_texts: list[dict[str, Any]]
 ) -> dict[str, Any]:
     """
     Compare OCR extracted texts from Excel and PDF documents.
@@ -278,10 +280,12 @@ def compare_ocr_texts(
             "excel_only": [],
             "pdf_only": [],
             "total_excel_pages": len(excel_texts),
-            "total_pdf_pages": len(pdf_texts)
+            "total_pdf_pages": len(pdf_texts),
         }
 
-        logger.warning("OCR text comparison not implemented - returning placeholder results")
+        logger.warning(
+            "OCR text comparison not implemented - returning placeholder results"
+        )
         return result
 
     except Exception as e:

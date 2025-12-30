@@ -9,12 +9,12 @@ from app.schemas.item import ItemCreate, ItemUpdate
 def create_item(*, session: Session, item_in: ItemCreate, owner_id: str) -> Item:
     """
     Create a new item.
-    
+
     Args:
         session: Database session
         item_in: Item creation data
         owner_id: ID of the item owner
-        
+
     Returns:
         Created item instance
     """
@@ -32,12 +32,12 @@ def create_item(*, session: Session, item_in: ItemCreate, owner_id: str) -> Item
 def update_item(*, session: Session, db_item: Item, item_in: ItemUpdate) -> Item:
     """
     Update an item.
-    
+
     Args:
         session: Database session
         db_item: Existing item from database
         item_in: Item update data
-        
+
     Returns:
         Updated item instance
     """
@@ -52,11 +52,11 @@ def update_item(*, session: Session, db_item: Item, item_in: ItemUpdate) -> Item
 def get_item(*, session: Session, item_id: str) -> Item | None:
     """
     Get an item by ID.
-    
+
     Args:
         session: Database session
         item_id: Item ID
-        
+
     Returns:
         Item instance if found, None otherwise
     """
@@ -68,29 +68,29 @@ def get_items(
 ) -> tuple[list[Item], int]:
     """
     Get list of items for a specific owner with pagination.
-    
+
     Args:
         session: Database session
         owner_id: Owner user ID
         skip: Number of records to skip
         limit: Maximum number of records to return
-        
+
     Returns:
         Tuple of (list of items, total count)
     """
     count_statement = select(Item).where(Item.owner_id == owner_id)
     count = len(session.exec(count_statement).all())
-    
+
     statement = select(Item).where(Item.owner_id == owner_id).offset(skip).limit(limit)
     items = session.exec(statement).all()
-    
+
     return list(items), count
 
 
 def delete_item(*, session: Session, item_id: str) -> None:
     """
     Delete an item.
-    
+
     Args:
         session: Database session
         item_id: Item ID to delete

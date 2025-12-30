@@ -22,15 +22,15 @@ def read_items(
     if current_user.is_superuser:
         # Superusers can see all items
         from sqlmodel import select
-        
+
         from app.models.item import Item
-        
+
         count_statement = select(Item)
         count = len(session.exec(count_statement).all())
-        
+
         statement = select(Item).offset(skip).limit(limit)
         items = session.exec(statement).all()
-        
+
         return ItemsPublic(data=list(items), count=count)
     else:
         # Regular users can only see their own items
@@ -90,7 +90,7 @@ def update_item(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions",
         )
-    
+
     item = item_crud.update_item(session=session, db_item=item, item_in=item_in)
     return item
 
@@ -111,6 +111,6 @@ def delete_item(session: SessionDep, current_user: CurrentUser, id: str) -> Mess
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions",
         )
-    
+
     item_crud.delete_item(session=session, item_id=id)
     return Message(message="Item deleted successfully")
