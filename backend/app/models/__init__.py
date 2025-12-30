@@ -13,7 +13,8 @@ When you add database integration:
 3. Import and expose models through __init__.py
 """
 
+from app.models.file import File
 from app.models.item import Item
 from app.models.user import User
 
-__all__ = ["User", "Item"]
+__all__ = ["User", "Item", "File"]

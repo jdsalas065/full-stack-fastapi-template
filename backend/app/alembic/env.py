@@ -22,6 +22,7 @@ config.set_main_option("sqlalchemy.url", str(settings.SQLALCHEMY_DATABASE_URI))
 
 # Import all models here to ensure they are registered with SQLModel metadata
 # This is critical for autogenerate to work properly
+from app.models.file import File  # noqa: F401
 from app.models.item import Item  # noqa: F401
 from app.models.user import User  # noqa: F401
 
