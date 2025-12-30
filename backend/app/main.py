@@ -36,6 +36,40 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     logger.info(f"Starting {settings.PROJECT_NAME}")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"API docs: http://localhost:8000{settings.API_V1_STR}/docs")
+    
+    # Initialize database in local environment (for development only)
+    # In production, use Alembic migrations instead
+    if settings.ENVIRONMENT == Environment.LOCAL:
+        logger.info("Local environment detected - initializing database tables")
+        from app.core.database import init_db
+        
+        try:
+            init_db()
+            logger.info("Database tables created successfully")
+            
+            # Create first superuser if not exists
+            from app.core.database import get_session
+            from app.crud import user as user_crud
+            from app.schemas.user import UserCreate
+            
+            with next(get_session()) as session:
+                user = user_crud.get_user_by_email(
+                    session=session, email=settings.FIRST_SUPERUSER
+                )
+                if not user:
+                    logger.info("Creating first superuser")
+                    user_crud.create_user(
+                        session=session,
+                        user_create=UserCreate(
+                            email=settings.FIRST_SUPERUSER,
+                            password=settings.FIRST_SUPERUSER_PASSWORD,
+                            is_superuser=True,
+                            full_name="Admin User",
+                        ),
+                    )
+                    logger.info("First superuser created successfully")
+        except Exception as e:
+            logger.error(f"Error initializing database: {e}")
 
     yield
 
