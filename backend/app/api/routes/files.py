@@ -13,11 +13,9 @@ Implements file CRUD operations:
 import os
 import tempfile
 from pathlib import Path
-from typing import Any
 
 from fastapi import (
     APIRouter,
-    Depends,
     File,
     HTTPException,
     UploadFile,
@@ -66,7 +64,7 @@ MAX_FILE_SIZE = 50 * 1024 * 1024
 def get_current_user_id() -> str:
     """
     Get current user ID.
-    
+
     TODO: Replace with actual authentication.
     For now, return a default user ID.
     """
@@ -404,7 +402,7 @@ async def delete_file(file_id: str, session: SessionDep) -> FileDeleteResponse:
 async def process_file(
     file_id: str,
     session: SessionDep,
-    payload: FileProcessRequest | None = None,
+    payload: FileProcessRequest | None = None,  # noqa: ARG001
 ) -> FileProcessResponse:
     """
     Process a file to extract content and fields.
