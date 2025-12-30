@@ -49,7 +49,7 @@ class DocumentProcessor:
         """
         # Auto-detect file type
         if file_type is None:
-            file_type = self._detect_file_type(file_name)
+            file_type = self.detect_file_type(file_name)
 
         if file_type == "excel":
             return await self._process_excel(file_stream, file_name)
@@ -85,7 +85,7 @@ class DocumentProcessor:
             
         # Auto-detect file type
         if file_type is None:
-            file_type = self._detect_file_type(file_name)
+            file_type = self.detect_file_type(file_name)
 
         if file_type == "excel":
             return await self._process_excel_from_path(file_path, file_name)
@@ -98,7 +98,7 @@ class DocumentProcessor:
         else:
             raise ValueError(f"Unsupported file type: {file_type}")
 
-    def _detect_file_type(self, file_name: str) -> str:
+    def detect_file_type(self, file_name: str) -> str:
         """
         Detect file type from extension.
 

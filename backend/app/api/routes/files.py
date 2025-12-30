@@ -11,6 +11,7 @@ Implements file CRUD operations:
 """
 
 import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -131,15 +132,13 @@ async def upload_file(
             )
 
         # Save to temp file first
-        import tempfile
-
         temp_fd, temp_path = tempfile.mkstemp(suffix=Path(file.filename).suffix)
         try:
             with os.fdopen(temp_fd, "wb") as f:
                 f.write(content)
 
             # Detect file type
-            file_type = document_processor._detect_file_type(file.filename)
+            file_type = document_processor.detect_file_type(file.filename)
 
             # Generate object name
             object_name = f"{user_id}/{file.filename}"

@@ -78,6 +78,7 @@ class StorageService:
         Raises:
             S3Error: If MinIO operation fails
         """
+        temp_path = None
         try:
             # Create temp file with proper extension
             file_ext = Path(object_name).suffix
@@ -96,7 +97,7 @@ class StorageService:
         except S3Error as e:
             logger.error(f"Error downloading file {object_name}: {e}")
             # Clean up temp file on error
-            if 'temp_path' in locals():
+            if temp_path is not None:
                 try:
                     os.unlink(temp_path)
                 except Exception:

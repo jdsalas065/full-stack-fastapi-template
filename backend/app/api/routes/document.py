@@ -8,6 +8,7 @@ Implements document processing and comparison endpoints using:
 """
 
 import asyncio
+import os
 from datetime import datetime
 from typing import Any
 
@@ -105,7 +106,6 @@ async def process_document_submission(
             # Clean up temp files
             for temp_path in temp_files:
                 try:
-                    import os
                     os.unlink(temp_path)
                 except Exception as e:
                     logger.warning(f"Failed to delete temp file {temp_path}: {e}")
@@ -247,7 +247,6 @@ async def compare_document_contents(
             )
         finally:
             # Clean up temp files
-            import os
             try:
                 os.unlink(excel_temp_path)
             except Exception as e:
