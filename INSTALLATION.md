@@ -67,7 +67,6 @@ This single command will:
 - Start backend API server
 - Start frontend application
 - Start Adminer (database admin UI)
-- Start MailCatcher (email testing)
 
 **First startup may take 2-3 minutes** while Docker downloads images and initializes services.
 
@@ -82,7 +81,6 @@ Once all services are running (check with `docker compose logs`):
 | **API Docs** | http://localhost:8000/docs | Interactive API documentation (Swagger) |
 | **Adminer** | http://localhost:8080 | Database management UI |
 | **MinIO Console** | http://localhost:9001 | Object storage admin UI |
-| **MailCatcher** | http://localhost:1080 | Email testing interface |
 
 ## Service Details
 

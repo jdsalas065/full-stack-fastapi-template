@@ -36,18 +36,6 @@ To check the logs of a specific service, add the name of the service, e.g.:
 docker compose logs backend
 ```
 
-## Mailcatcher
-
-Mailcatcher is a simple SMTP server that catches all emails sent by the backend during local development. Instead of sending real emails, they are captured and displayed in a web interface.
-
-This is useful for:
-
-* Testing email functionality during development
-* Verifying email content and formatting
-* Debugging email-related functionality without sending real emails
-
-The backend is automatically configured to use Mailcatcher when running with Docker Compose locally (SMTP on port 1025). All captured emails can be viewed at <http://localhost:1080>.
-
 ## Local Development
 
 The Docker Compose files are configured so that each of the services is available in a different port in `localhost`.
@@ -202,8 +190,6 @@ MinIO Console: <http://localhost:9001>
 
 Traefik UI: <http://localhost:8090>
 
-MailCatcher: <http://localhost:1080>
-
 ### Development URLs with `localhost.local` Configured
 
 Development URLs, for local development.
@@ -221,5 +207,3 @@ Adminer: <http://localhost.local:8080>
 MinIO Console: <http://localhost.local:9001>
 
 Traefik UI: <http://localhost.local:8090>
-
-MailCatcher: <http://localhost.local:1080>

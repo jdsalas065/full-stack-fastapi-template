@@ -21,7 +21,6 @@ from app.schemas.user import (
     UserUpdate,
     UserUpdateMe,
 )
-from app.utils.email import send_new_account_email
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -54,9 +53,8 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
         )
     user = user_crud.create_user(session=session, user_create=user_in)
 
-    if user.email:
-        send_new_account_email(email_to=user.email, username=user.email)
-
+    # Email functionality removed - account created successfully
+    
     return user
 
 
