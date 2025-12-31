@@ -48,11 +48,20 @@ You can **just fork or clone** this repository and use it as is.
 
 ✨ It just works. ✨
 
-### Quick Installation
+### Installation Guides
 
-For a complete step-by-step installation guide including MinIO setup, see [INSTALLATION.md](./INSTALLATION.md).
+We provide comprehensive installation guides for different needs:
 
-**Quick start:**
+- **[INSTALLATION.md](./INSTALLATION.md)** - Quick start with Docker (5 minutes)
+- **[DEVELOPMENT_SETUP.md](./DEVELOPMENT_SETUP.md)** - Complete development setup guide including:
+  - Docker-based development (recommended)
+  - Manual installation of all components
+  - Individual service setup (PostgreSQL, MinIO, etc.)
+  - Development tools and IDE configuration
+  - Troubleshooting guide
+
+### Quick Start with Docker
+
 ```bash
 git clone <repository-url>
 cd full-stack-fastapi-template
@@ -64,6 +73,13 @@ Then access:
 - Backend API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 - MinIO Console: http://localhost:9001
+
+### Development Without Docker
+
+See [DEVELOPMENT_SETUP.md](./DEVELOPMENT_SETUP.md) for complete instructions on:
+- Installing Python, Node.js, PostgreSQL, and MinIO
+- Setting up backend and frontend separately
+- Configuring each service for local development
 
 ### How to Use a Private Repository
 
