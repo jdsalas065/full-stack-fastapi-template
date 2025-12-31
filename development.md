@@ -18,6 +18,8 @@ Automatic interactive documentation with Swagger UI (from the OpenAPI backend): 
 
 Adminer, database web administration: <http://localhost:8080>
 
+MinIO Console, object storage web interface: <http://localhost:9001>
+
 Traefik UI, to see how the routes are being handled by the proxy: <http://localhost:8090>
 
 **Note**: The first time you start your stack, it might take a minute for it to be ready. While the backend waits for the database to be ready and configures everything. You can check the logs to monitor it.
@@ -33,18 +35,6 @@ To check the logs of a specific service, add the name of the service, e.g.:
 ```bash
 docker compose logs backend
 ```
-
-## Mailcatcher
-
-Mailcatcher is a simple SMTP server that catches all emails sent by the backend during local development. Instead of sending real emails, they are captured and displayed in a web interface.
-
-This is useful for:
-
-* Testing email functionality during development
-* Verifying email content and formatting
-* Debugging email-related functionality without sending real emails
-
-The backend is automatically configured to use Mailcatcher when running with Docker Compose locally (SMTP on port 1025). All captured emails can be viewed at <http://localhost:1080>.
 
 ## Local Development
 
@@ -196,9 +186,9 @@ Automatic Alternative Docs (ReDoc): <http://localhost:8000/redoc>
 
 Adminer: <http://localhost:8080>
 
-Traefik UI: <http://localhost:8090>
+MinIO Console: <http://localhost:9001>
 
-MailCatcher: <http://localhost:1080>
+Traefik UI: <http://localhost:8090>
 
 ### Development URLs with `localhost.local` Configured
 
@@ -214,6 +204,6 @@ Automatic Alternative Docs (ReDoc): <http://api.localhost.local/redoc>
 
 Adminer: <http://localhost.local:8080>
 
-Traefik UI: <http://localhost.local:8090>
+MinIO Console: <http://localhost.local:9001>
 
-MailCatcher: <http://localhost.local:1080>
+Traefik UI: <http://localhost.local:8090>

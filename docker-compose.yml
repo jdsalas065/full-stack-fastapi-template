@@ -42,6 +42,47 @@ services:
       - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.tls.certresolver=le
       - traefik.http.services.${STACK_NAME?Variable not set}-adminer.loadbalancer.server.port=8080
 
+  minio:
+    image: minio/minio:latest
+    restart: always
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    volumes:
+      - minio-data:/data
+    env_file:
+      - .env
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY?Variable not set}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY?Variable not set}
+    networks:
+      - traefik-public
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+      - traefik.http.routers.${STACK_NAME?Variable not set}-minio-http.rule=Host(`minio.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-minio-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME?Variable not set}-minio-http.middlewares=https-redirect
+      - traefik.http.routers.${STACK_NAME?Variable not set}-minio-https.rule=Host(`minio.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-minio-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME?Variable not set}-minio-https.tls=true
+      - traefik.http.routers.${STACK_NAME?Variable not set}-minio-https.tls.certresolver=le
+      - traefik.http.services.${STACK_NAME?Variable not set}-minio.loadbalancer.server.port=9000
+      # MinIO Console
+      - traefik.http.routers.${STACK_NAME?Variable not set}-minio-console-http.rule=Host(`minio-console.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-minio-console-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME?Variable not set}-minio-console-http.middlewares=https-redirect
+      - traefik.http.routers.${STACK_NAME?Variable not set}-minio-console-https.rule=Host(`minio-console.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-minio-console-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME?Variable not set}-minio-console-https.tls=true
+      - traefik.http.routers.${STACK_NAME?Variable not set}-minio-console-https.tls.certresolver=le
+      - traefik.http.services.${STACK_NAME?Variable not set}-minio-console.loadbalancer.server.port=9001
+
   prestart:
     image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
     build:
@@ -52,7 +93,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-        restart: true
+      minio:
+        condition: service_healthy
     command: bash scripts/prestart.sh
     env_file:
       - .env
@@ -64,15 +106,17 @@ services:
       - SECRET_KEY=${SECRET_KEY?Variable not set}
       - FIRST_SUPERUSER=${FIRST_SUPERUSER?Variable not set}
       - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD?Variable not set}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - EMAILS_FROM_EMAIL=${EMAILS_FROM_EMAIL}
       - POSTGRES_SERVER=db
       - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_SECURE=${MINIO_SECURE}
+      - MINIO_BUCKET=${MINIO_BUCKET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - SENTRY_DSN=${SENTRY_DSN}
 
   backend:
@@ -84,7 +128,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-        restart: true
+      minio:
+        condition: service_healthy
       prestart:
         condition: service_completed_successfully
     env_file:
@@ -97,15 +142,17 @@ services:
       - SECRET_KEY=${SECRET_KEY?Variable not set}
       - FIRST_SUPERUSER=${FIRST_SUPERUSER?Variable not set}
       - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD?Variable not set}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - EMAILS_FROM_EMAIL=${EMAILS_FROM_EMAIL}
       - POSTGRES_SERVER=db
       - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_SECURE=${MINIO_SECURE}
+      - MINIO_BUCKET=${MINIO_BUCKET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
       - SENTRY_DSN=${SENTRY_DSN}
 
     healthcheck:
@@ -164,6 +211,7 @@ services:
       - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
 volumes:
   app-db-data:
+  minio-data:
 
 networks:
   traefik-public:

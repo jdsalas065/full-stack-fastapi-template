@@ -13,7 +13,6 @@ Implements file CRUD operations:
 import os
 import tempfile
 from pathlib import Path
-from typing import Any
 
 from fastapi import (
     APIRouter,
@@ -24,9 +23,10 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 
+from app.api.dependencies import SessionDep
 from app.core.constants import Tags
 from app.core.logging import get_logger
-from app.crud.file import file_crud
+from app.crud import file as file_crud
 from app.schemas.file import (
     FileDeleteResponse,
     FileInfo,
@@ -64,7 +64,7 @@ MAX_FILE_SIZE = 50 * 1024 * 1024
 def get_current_user_id() -> str:
     """
     Get current user ID.
-    
+
     TODO: Replace with actual authentication.
     For now, return a default user ID.
     """
@@ -103,6 +103,7 @@ def validate_file(file: UploadFile) -> None:
     description="Upload a document file (Excel, PDF, docs, images) to MinIO storage.",
 )
 async def upload_file(
+    session: SessionDep,
     file: UploadFile = File(...),
 ) -> FileUploadResponse:
     """
@@ -150,8 +151,9 @@ async def upload_file(
                 content_type=file.content_type,
             )
 
-            # Create file record
+            # Create file record in database
             file_data = file_crud.create(
+                session=session,
                 user_id=user_id,
                 filename=file.filename,
                 file_type=file_type,
@@ -160,12 +162,12 @@ async def upload_file(
             )
 
             return FileUploadResponse(
-                file_id=file_data["file_id"],
-                filename=file_data["filename"],
-                file_type=file_data["file_type"],
-                file_size=file_data["file_size"],
-                object_name=file_data["object_name"],
-                uploaded_at=file_data["uploaded_at"],
+                file_id=file_data.id,
+                filename=file_data.filename,
+                file_type=file_data.file_type,
+                file_size=file_data.file_size,
+                object_name=file_data.object_name,
+                uploaded_at=file_data.uploaded_at,
             )
 
         finally:
@@ -191,7 +193,7 @@ async def upload_file(
     summary="List files",
     description="List all files uploaded by the current user.",
 )
-async def list_files() -> FileListResponse:
+async def list_files(session: SessionDep) -> FileListResponse:
     """
     List all files for the current user.
 
@@ -200,18 +202,18 @@ async def list_files() -> FileListResponse:
     """
     try:
         user_id = get_current_user_id()
-        files = file_crud.list_by_user(user_id)
+        files = file_crud.list_by_user(session=session, user_id=user_id)
 
         file_infos = [
             FileInfo(
-                file_id=f["file_id"],
-                user_id=f["user_id"],
-                filename=f["filename"],
-                file_type=f["file_type"],
-                file_size=f["file_size"],
-                object_name=f["object_name"],
-                uploaded_at=f["uploaded_at"],
-                updated_at=f["updated_at"],
+                file_id=f.id,
+                user_id=f.user_id,
+                filename=f.filename,
+                file_type=f.file_type,
+                file_size=f.file_size,
+                object_name=f.object_name,
+                uploaded_at=f.uploaded_at,
+                updated_at=f.updated_at,
             )
             for f in files
         ]
@@ -232,7 +234,7 @@ async def list_files() -> FileListResponse:
     summary="Get file details",
     description="Get details of a specific file.",
 )
-async def get_file(file_id: str) -> FileInfo:
+async def get_file(file_id: str, session: SessionDep) -> FileInfo:
     """
     Get file details.
 
@@ -243,7 +245,7 @@ async def get_file(file_id: str) -> FileInfo:
         FileInfo with file details
     """
     try:
-        file_data = file_crud.get(file_id)
+        file_data = file_crud.get(session=session, file_id=file_id)
         if not file_data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -252,13 +254,22 @@ async def get_file(file_id: str) -> FileInfo:
 
         # Verify user owns the file
         user_id = get_current_user_id()
-        if file_data["user_id"] != user_id:
+        if file_data.user_id != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied",
             )
 
-        return FileInfo(**file_data)
+        return FileInfo(
+            file_id=file_data.id,
+            user_id=file_data.user_id,
+            filename=file_data.filename,
+            file_type=file_data.file_type,
+            file_size=file_data.file_size,
+            object_name=file_data.object_name,
+            uploaded_at=file_data.uploaded_at,
+            updated_at=file_data.updated_at,
+        )
 
     except HTTPException:
         raise
@@ -275,7 +286,7 @@ async def get_file(file_id: str) -> FileInfo:
     summary="Download file",
     description="Download a file from storage.",
 )
-async def download_file(file_id: str) -> FileResponse:
+async def download_file(file_id: str, session: SessionDep) -> FileResponse:
     """
     Download a file.
 
@@ -287,7 +298,7 @@ async def download_file(file_id: str) -> FileResponse:
     """
     temp_path = None
     try:
-        file_data = file_crud.get(file_id)
+        file_data = file_crud.get(session=session, file_id=file_id)
         if not file_data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -296,7 +307,7 @@ async def download_file(file_id: str) -> FileResponse:
 
         # Verify user owns the file
         user_id = get_current_user_id()
-        if file_data["user_id"] != user_id:
+        if file_data.user_id != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied",
@@ -304,12 +315,12 @@ async def download_file(file_id: str) -> FileResponse:
 
         # Download from MinIO to temp file
         temp_path = await storage_service.download_file_to_temp(
-            file_data["object_name"]
+            file_data.object_name
         )
 
         return FileResponse(
             path=temp_path,
-            filename=file_data["filename"],
+            filename=file_data.filename,
             media_type="application/octet-stream",
         )
 
@@ -335,7 +346,7 @@ async def download_file(file_id: str) -> FileResponse:
     summary="Delete file",
     description="Delete a file from storage.",
 )
-async def delete_file(file_id: str) -> FileDeleteResponse:
+async def delete_file(file_id: str, session: SessionDep) -> FileDeleteResponse:
     """
     Delete a file.
 
@@ -346,7 +357,7 @@ async def delete_file(file_id: str) -> FileDeleteResponse:
         FileDeleteResponse with deletion status
     """
     try:
-        file_data = file_crud.get(file_id)
+        file_data = file_crud.get(session=session, file_id=file_id)
         if not file_data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -355,17 +366,17 @@ async def delete_file(file_id: str) -> FileDeleteResponse:
 
         # Verify user owns the file
         user_id = get_current_user_id()
-        if file_data["user_id"] != user_id:
+        if file_data.user_id != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied",
             )
 
         # Delete from MinIO
-        await storage_service.delete_file(file_data["object_name"])
+        await storage_service.delete_file(file_data.object_name)
 
-        # Delete from metadata
-        file_crud.delete(file_id)
+        # Delete from database
+        file_crud.delete(session=session, file_id=file_id)
 
         return FileDeleteResponse(
             message="File deleted successfully",
@@ -390,7 +401,8 @@ async def delete_file(file_id: str) -> FileDeleteResponse:
 )
 async def process_file(
     file_id: str,
-    payload: FileProcessRequest | None = None,
+    session: SessionDep,
+    payload: FileProcessRequest | None = None,  # noqa: ARG001
 ) -> FileProcessResponse:
     """
     Process a file to extract content and fields.
@@ -404,7 +416,7 @@ async def process_file(
     """
     temp_path = None
     try:
-        file_data = file_crud.get(file_id)
+        file_data = file_crud.get(session=session, file_id=file_id)
         if not file_data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -413,7 +425,7 @@ async def process_file(
 
         # Verify user owns the file
         user_id = get_current_user_id()
-        if file_data["user_id"] != user_id:
+        if file_data.user_id != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied",
@@ -421,14 +433,14 @@ async def process_file(
 
         # Download file to temp
         temp_path = await storage_service.download_file_to_temp(
-            file_data["object_name"]
+            file_data.object_name
         )
 
         # Process file
         result = await document_processor.process_file_from_path(
             temp_path,
-            file_data["filename"],
-            file_data["file_type"],
+            file_data.filename,
+            file_data.file_type,
         )
 
         return FileProcessResponse(

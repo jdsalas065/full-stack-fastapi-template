@@ -55,6 +55,12 @@ services:
     ports:
       - "8080:8080"
 
+  minio:
+    restart: "no"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
   backend:
     restart: "no"
     ports:
@@ -80,17 +86,6 @@ services:
     # TODO: remove once coverage is done locally
     volumes:
       - ./backend/htmlcov:/app/htmlcov
-    environment:
-      SMTP_HOST: "mailcatcher"
-      SMTP_PORT: "1025"
-      SMTP_TLS: "false"
-      EMAILS_FROM_EMAIL: "noreply@localhost"
-
-  mailcatcher:
-    image: schickling/mailcatcher
-    ports:
-      - "1080:1080"
-      - "1025:1025"
 
   frontend:
     restart: "no"
