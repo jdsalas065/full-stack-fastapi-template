@@ -3,5 +3,10 @@
 set -e
 set -x
 
-# Basic health check - no database or migrations needed in base version
-echo "Backend base is ready to start"
+# Run Alembic migrations
+alembic upgrade head
+
+# Initialize MinIO bucket
+python scripts/init_minio.py
+
+echo "Backend prestart completed successfully"

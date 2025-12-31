@@ -6,6 +6,7 @@
   - 🧰 **SQLModel** for the Python SQL database interactions (ORM).
   - 🔍 [Pydantic](https://docs.pydantic.dev), used by FastAPI, for the data validation and settings management.
   - 💾 [PostgreSQL](https://www.postgresql.org) as the SQL database.
+- 📦 **MinIO** for S3-compatible object storage (file uploads).
 - 🚀 [React](https://react.dev) for the frontend.
   - 💃 Using TypeScript, hooks, [Vite](https://vitejs.dev), and other parts of a modern frontend stack.
   - 🎨 [Tailwind CSS](https://tailwindcss.com) and [shadcn/ui](https://ui.shadcn.com) for the frontend components.
@@ -46,6 +47,23 @@
 You can **just fork or clone** this repository and use it as is.
 
 ✨ It just works. ✨
+
+### Quick Installation
+
+For a complete step-by-step installation guide including MinIO setup, see [INSTALLATION.md](./INSTALLATION.md).
+
+**Quick start:**
+```bash
+git clone <repository-url>
+cd full-stack-fastapi-template
+docker compose watch
+```
+
+Then access:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+- MinIO Console: http://localhost:9001
 
 ### How to Use a Private Repository
 

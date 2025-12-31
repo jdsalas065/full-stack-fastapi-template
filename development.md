@@ -18,6 +18,8 @@ Automatic interactive documentation with Swagger UI (from the OpenAPI backend): 
 
 Adminer, database web administration: <http://localhost:8080>
 
+MinIO Console, object storage web interface: <http://localhost:9001>
+
 Traefik UI, to see how the routes are being handled by the proxy: <http://localhost:8090>
 
 **Note**: The first time you start your stack, it might take a minute for it to be ready. While the backend waits for the database to be ready and configures everything. You can check the logs to monitor it.
@@ -196,6 +198,8 @@ Automatic Alternative Docs (ReDoc): <http://localhost:8000/redoc>
 
 Adminer: <http://localhost:8080>
 
+MinIO Console: <http://localhost:9001>
+
 Traefik UI: <http://localhost:8090>
 
 MailCatcher: <http://localhost:1080>
@@ -213,6 +217,8 @@ Automatic Interactive Docs (Swagger UI): <http://api.localhost.local/docs>
 Automatic Alternative Docs (ReDoc): <http://api.localhost.local/redoc>
 
 Adminer: <http://localhost.local:8080>
+
+MinIO Console: <http://localhost.local:9001>
 
 Traefik UI: <http://localhost.local:8090>
 
