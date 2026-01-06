@@ -13,6 +13,7 @@ Implements file CRUD operations:
 import os
 import tempfile
 from pathlib import Path
+from typing import cast
 
 from fastapi import (
     APIRouter,
@@ -129,14 +130,8 @@ async def upload_file(
 
         # Validate file
         validate_file(file)
-
-        # After validation, filename is guaranteed to be non-None
-        if file.filename is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Filename is required",
-            )
-        filename = file.filename
+        # After validation, filename is guaranteed to be non-empty string (type narrowing)
+        filename = cast(str, file.filename)
 
         # Validate task_id if provided
         if task_id is not None:
