@@ -16,6 +16,7 @@ class File(SQLModel, table=True):
 
     id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
     user_id: str = Field(index=True, max_length=255)
+    task_id: str | None = Field(default=None, index=True, max_length=255)
     filename: str = Field(max_length=255)
     file_type: str = Field(max_length=50)
     file_size: int

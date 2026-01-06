@@ -127,14 +127,31 @@ pip install minio openai pandas openpyxl PyMuPDF Pillow
 ## 🚀 Usage
 
 ### 1. Upload files to MinIO:
-```python
-# Files should be organized as:
-# {task_id}/file1.xlsx
-# {task_id}/file2.pdf
-# etc.
+
+#### For Document Processing (with task_id):
+```bash
+# Upload files with task_id for document processing
+POST /api/v1/files/upload?task_id=task-123
+Content-Type: multipart/form-data
+
+# Files will be stored as: {task_id}/{filename}
+# Example: task-123/invoice.xlsx, task-123/invoice.pdf
 ```
 
-### 2. Call API:
+#### For General File Storage (without task_id):
+```bash
+# Upload files without task_id for general storage
+POST /api/v1/files/upload
+
+# Files will be stored as: {user_id}/{filename}
+# Example: user-456/document.pdf
+```
+
+**MinIO Object Naming Convention:**
+- **With task_id**: `{task_id}/{filename}` - Used for document processing workflows
+- **Without task_id**: `{user_id}/{filename}` - Used for general file storage
+
+### 2. Call Document Processing APIs:
 ```bash
 # Process multiple documents
 POST /api/v1/document/process_document_submission
@@ -179,8 +196,9 @@ ocr_results = await storage_service.get_ocr_result(task_id)
 
 1. **MinIO Setup**: Đảm bảo MinIO đang chạy và bucket đã được tạo
 2. **OpenAI API Key**: Cần có API key hợp lệ
-3. **File Organization**: Files phải được organize theo task_id trong MinIO
-4. **Large Files**: Hiện tại load toàn bộ file vào memory, có thể cần optimize cho files lớn
+3. **File Organization**: Files có thể được organize theo task_id (cho document processing) hoặc user_id (cho general storage)
+4. **Database Migration**: Run `alembic upgrade head` để apply migration thêm task_id column vào file table
+5. **Large Files**: Hiện tại load toàn bộ file vào memory, có thể cần optimize cho files lớn
 
 ---
 

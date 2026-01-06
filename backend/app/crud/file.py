@@ -23,6 +23,7 @@ def create(
     file_type: str,
     file_size: int,
     object_name: str,
+    task_id: str | None = None,
 ) -> File:
     """
     Create a new file record.
@@ -34,6 +35,7 @@ def create(
         file_type: Detected file type
         file_size: File size in bytes
         object_name: Object name in MinIO
+        task_id: Optional task ID for document processing
 
     Returns:
         File instance
@@ -44,6 +46,7 @@ def create(
         file_type=file_type,
         file_size=file_size,
         object_name=object_name,
+        task_id=task_id,
     )
     session.add(db_obj)
     session.commit()
@@ -78,6 +81,21 @@ def list_by_user(*, session: Session, user_id: str) -> list[File]:
         List of File instances
     """
     statement = select(File).where(File.user_id == user_id)
+    return list(session.exec(statement).all())
+
+
+def list_by_task_id(*, session: Session, task_id: str) -> list[File]:
+    """
+    List all files for a task_id.
+
+    Args:
+        session: Database session
+        task_id: Task ID
+
+    Returns:
+        List of File instances
+    """
+    statement = select(File).where(File.task_id == task_id)
     return list(session.exec(statement).all())
 
 

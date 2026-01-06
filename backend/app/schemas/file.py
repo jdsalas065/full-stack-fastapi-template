@@ -18,6 +18,7 @@ class FileUploadResponse(BaseModel):
     file_type: str = Field(..., description="Detected file type")
     file_size: int = Field(..., description="File size in bytes")
     object_name: str = Field(..., description="Object name in MinIO storage")
+    task_id: str | None = Field(None, description="Task ID for document processing")
     uploaded_at: datetime = Field(..., description="Upload timestamp")
 
 
@@ -30,6 +31,7 @@ class FileInfo(BaseModel):
     file_type: str = Field(..., description="File type")
     file_size: int = Field(..., description="File size in bytes")
     object_name: str = Field(..., description="Object name in MinIO storage")
+    task_id: str | None = Field(None, description="Task ID for document processing")
     uploaded_at: datetime = Field(..., description="Upload timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
 

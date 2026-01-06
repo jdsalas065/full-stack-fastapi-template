@@ -105,12 +105,20 @@ def validate_file(file: UploadFile) -> None:
 async def upload_file(
     session: SessionDep,
     file: UploadFile = File(...),
+    task_id: str | None = None,
 ) -> FileUploadResponse:
     """
     Upload a file to MinIO storage.
 
     Accepts: Excel (.xlsx, .xls), PDF (.pdf), Word (.doc, .docx),
     Images (.png, .jpg, .jpeg, .bmp, .tiff, .gif)
+
+    Args:
+        session: Database session
+        file: File to upload
+        task_id: Optional task ID for document processing.
+                 If provided, file will be stored as {task_id}/{filename}.
+                 If not provided, file will be stored as {user_id}/{filename}.
 
     Returns:
         FileUploadResponse with file metadata
@@ -121,6 +129,15 @@ async def upload_file(
 
         # Validate file
         validate_file(file)
+        
+        # Validate task_id if provided
+        if task_id is not None:
+            task_id = task_id.strip()
+            if not task_id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="task_id cannot be empty",
+                )
 
         # Read file content
         content = await file.read()
@@ -141,8 +158,11 @@ async def upload_file(
             # Detect file type
             file_type = document_processor.detect_file_type(file.filename)
 
-            # Generate object name
-            object_name = f"{user_id}/{file.filename}"
+            # Generate object name based on whether task_id is provided
+            if task_id:
+                object_name = f"{task_id}/{file.filename}"
+            else:
+                object_name = f"{user_id}/{file.filename}"
 
             # Upload to MinIO
             await storage_service.upload_file(
@@ -159,6 +179,7 @@ async def upload_file(
                 file_type=file_type,
                 file_size=file_size,
                 object_name=object_name,
+                task_id=task_id,
             )
 
             return FileUploadResponse(
@@ -167,6 +188,7 @@ async def upload_file(
                 file_type=file_data.file_type,
                 file_size=file_data.file_size,
                 object_name=file_data.object_name,
+                task_id=file_data.task_id,
                 uploaded_at=file_data.uploaded_at,
             )
 
@@ -212,6 +234,7 @@ async def list_files(session: SessionDep) -> FileListResponse:
                 file_type=f.file_type,
                 file_size=f.file_size,
                 object_name=f.object_name,
+                task_id=f.task_id,
                 uploaded_at=f.uploaded_at,
                 updated_at=f.updated_at,
             )
@@ -267,6 +290,7 @@ async def get_file(file_id: str, session: SessionDep) -> FileInfo:
             file_type=file_data.file_type,
             file_size=file_data.file_size,
             object_name=file_data.object_name,
+            task_id=file_data.task_id,
             uploaded_at=file_data.uploaded_at,
             updated_at=file_data.updated_at,
         )
