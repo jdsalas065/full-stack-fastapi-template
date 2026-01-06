@@ -131,7 +131,11 @@ async def upload_file(
         validate_file(file)
 
         # After validation, filename is guaranteed to be non-None
-        assert file.filename is not None, "Filename must be present after validation"
+        if file.filename is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Filename is required",
+            )
         filename = file.filename
 
         # Validate task_id if provided
