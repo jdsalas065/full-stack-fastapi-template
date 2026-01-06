@@ -82,7 +82,7 @@ class DocumentProcessor:
         """
         if file_name is None:
             file_name = Path(file_path).name
-            
+
         # Auto-detect file type
         if file_type is None:
             file_type = self.detect_file_type(file_name)

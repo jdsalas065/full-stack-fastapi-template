@@ -89,7 +89,7 @@ async def process_document_submission(
             # Download file to temp
             temp_path = await storage_service.download_file_to_temp(file_info["name"])
             temp_files.append(temp_path)
-            
+
             task = document_processor.process_file_from_path(
                 temp_path,
                 file_info["name"],
@@ -220,13 +220,13 @@ async def compare_document_contents(
                 document_processor.process_file_from_path(pdf_temp_path, pdf_file_name, "pdf"),
             )
 
-        # Step 3: Compare
-        comparison = field_comparison_service.compare_documents(
-            [
-                excel_result,
-                pdf_result,
-            ]
-        )
+            # Step 3: Compare
+            comparison = field_comparison_service.compare_documents(
+                [
+                    excel_result,
+                    pdf_result,
+                ]
+            )
 
             # Step 4: Save OCR results
             ocr_results = {

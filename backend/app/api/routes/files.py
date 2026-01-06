@@ -129,7 +129,7 @@ async def upload_file(
 
         # Validate file
         validate_file(file)
-        
+
         # Validate task_id if provided
         if task_id is not None:
             task_id = task_id.strip()

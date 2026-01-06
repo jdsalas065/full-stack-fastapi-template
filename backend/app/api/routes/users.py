@@ -54,7 +54,7 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
     user = user_crud.create_user(session=session, user_create=user_in)
 
     # Email functionality removed - account created successfully
-    
+
     return user
 
 

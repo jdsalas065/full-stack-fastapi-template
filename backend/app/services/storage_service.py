@@ -84,7 +84,7 @@ class StorageService:
             file_ext = Path(object_name).suffix
             temp_fd, temp_path = tempfile.mkstemp(suffix=file_ext)
             os.close(temp_fd)
-            
+
             # Download file to temp path
             await asyncio.to_thread(
                 self.client.fget_object,

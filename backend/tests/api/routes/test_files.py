@@ -12,15 +12,19 @@ def test_upload_file_success(client: TestClient) -> None:
     files = {
         "file": ("test.pdf", BytesIO(file_content), "application/pdf")
     }
-    
+
     response = client.post("/api/v1/files/upload", files=files)
-    
+
     assert response.status_code == 201
     data = response.json()
     assert "file_id" in data
     assert data["filename"] == "test.pdf"
     assert data["file_type"] == "pdf"
     assert data["file_size"] == len(file_content)
+    assert data["task_id"] is None
+    # Without task_id, object_name should be {user_id}/{filename}
+    assert "/" in data["object_name"]
+    assert data["object_name"].endswith("/test.pdf")
 
 
 def test_upload_file_unsupported_type(client: TestClient) -> None:
@@ -29,9 +33,9 @@ def test_upload_file_unsupported_type(client: TestClient) -> None:
     files = {
         "file": ("test.txt", BytesIO(file_content), "text/plain")
     }
-    
+
     response = client.post("/api/v1/files/upload", files=files)
-    
+
     assert response.status_code == 400
     assert "Unsupported file type" in response.json()["detail"]
 
@@ -42,16 +46,16 @@ def test_upload_file_no_filename(client: TestClient) -> None:
     files = {
         "file": ("", BytesIO(file_content), "application/pdf")
     }
-    
+
     response = client.post("/api/v1/files/upload", files=files)
-    
+
     assert response.status_code == 400
 
 
 def test_list_files(client: TestClient) -> None:
     """Test listing files."""
     response = client.get("/api/v1/files")
-    
+
     assert response.status_code == 200
     data = response.json()
     assert "files" in data
@@ -62,14 +66,14 @@ def test_list_files(client: TestClient) -> None:
 def test_get_file_not_found(client: TestClient) -> None:
     """Test getting non-existent file."""
     response = client.get("/api/v1/files/non-existent-id")
-    
+
     assert response.status_code == 404
 
 
 def test_delete_file_not_found(client: TestClient) -> None:
     """Test deleting non-existent file."""
     response = client.delete("/api/v1/files/non-existent-id")
-    
+
     assert response.status_code == 404
 
 
@@ -79,9 +83,9 @@ def test_upload_excel_file(client: TestClient) -> None:
     files = {
         "file": ("test.xlsx", BytesIO(file_content), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     }
-    
+
     response = client.post("/api/v1/files/upload", files=files)
-    
+
     assert response.status_code == 201
     data = response.json()
     assert data["file_type"] == "excel"
@@ -93,9 +97,9 @@ def test_upload_image_file(client: TestClient) -> None:
     files = {
         "file": ("test.png", BytesIO(file_content), "image/png")
     }
-    
+
     response = client.post("/api/v1/files/upload", files=files)
-    
+
     assert response.status_code == 201
     data = response.json()
     assert data["file_type"] == "image"
@@ -107,9 +111,101 @@ def test_upload_word_file(client: TestClient) -> None:
     files = {
         "file": ("test.docx", BytesIO(file_content), "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
     }
-    
+
     response = client.post("/api/v1/files/upload", files=files)
-    
+
     assert response.status_code == 201
     data = response.json()
     assert data["file_type"] == "docx"
+
+
+def test_upload_file_with_task_id(client: TestClient) -> None:
+    """Test uploading file with task_id."""
+    file_content = b"Test file content for task"
+    files = {
+        "file": ("invoice.pdf", BytesIO(file_content), "application/pdf")
+    }
+
+    task_id = "test-task-123"
+    response = client.post(
+        f"/api/v1/files/upload?task_id={task_id}",
+        files=files
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["filename"] == "invoice.pdf"
+    assert data["task_id"] == task_id
+    # With task_id, object_name should be {task_id}/{filename}
+    assert data["object_name"] == f"{task_id}/invoice.pdf"
+
+
+def test_upload_file_with_empty_task_id(client: TestClient) -> None:
+    """Test uploading file with empty task_id."""
+    file_content = b"Test file content"
+    files = {
+        "file": ("test.pdf", BytesIO(file_content), "application/pdf")
+    }
+
+    response = client.post(
+        "/api/v1/files/upload?task_id=",
+        files=files
+    )
+
+    # Should reject empty task_id
+    assert response.status_code == 400
+    assert "task_id cannot be empty" in response.json()["detail"]
+
+
+def test_upload_file_with_whitespace_task_id(client: TestClient) -> None:
+    """Test uploading file with whitespace-only task_id."""
+    file_content = b"Test file content"
+    files = {
+        "file": ("test.pdf", BytesIO(file_content), "application/pdf")
+    }
+
+    response = client.post(
+        "/api/v1/files/upload?task_id=   ",
+        files=files
+    )
+
+    # Should reject whitespace-only task_id
+    assert response.status_code == 400
+    assert "task_id cannot be empty" in response.json()["detail"]
+
+
+def test_upload_multiple_files_same_task_id(client: TestClient) -> None:
+    """Test uploading multiple files with the same task_id."""
+    task_id = "task-multi-456"
+
+    # Upload first file
+    file1_content = b"Test Excel content"
+    files1 = {
+        "file": ("invoice.xlsx", BytesIO(file1_content), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    }
+    response1 = client.post(
+        f"/api/v1/files/upload?task_id={task_id}",
+        files=files1
+    )
+    assert response1.status_code == 201
+    data1 = response1.json()
+    assert data1["task_id"] == task_id
+    assert data1["object_name"] == f"{task_id}/invoice.xlsx"
+
+    # Upload second file with same task_id
+    file2_content = b"Test PDF content"
+    files2 = {
+        "file": ("invoice.pdf", BytesIO(file2_content), "application/pdf")
+    }
+    response2 = client.post(
+        f"/api/v1/files/upload?task_id={task_id}",
+        files=files2
+    )
+    assert response2.status_code == 201
+    data2 = response2.json()
+    assert data2["task_id"] == task_id
+    assert data2["object_name"] == f"{task_id}/invoice.pdf"
+
+    # Both files should have the same task_id but different filenames
+    assert data1["file_id"] != data2["file_id"]
+    assert data1["filename"] != data2["filename"]
