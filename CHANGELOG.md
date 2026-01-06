@@ -1,5 +1,42 @@
 # Changelog
 
+## [Unreleased] - 2026-01-06
+
+### Added
+
+#### Task-Based File Organization
+- **Task ID Support** for MinIO object naming
+  - Added optional `task_id` parameter to file upload API
+  - Files can now be stored as `{task_id}/{filename}` for document processing workflows
+  - Legacy `{user_id}/{filename}` pattern still supported for general file storage
+  - Database migration adds `task_id` column to file table
+  - New `list_by_task_id()` CRUD function for querying files by task
+  - See `MINIO_MIGRATION_GUIDE.md` for detailed migration instructions
+
+#### Enhanced File Schemas
+- `FileUploadResponse` now includes `task_id` field
+- `FileInfo` now includes `task_id` field
+- Updated file upload validation to reject empty `task_id` values
+
+#### Documentation
+- New `MINIO_MIGRATION_GUIDE.md` with comprehensive migration instructions
+- Updated `IMPLEMENTATION_SUMMARY.md` with MinIO object naming conventions
+- Added API usage examples for task-based file uploads
+
+#### Testing
+- New tests for task-based file uploads
+- Tests for empty/whitespace `task_id` validation
+- Tests for multiple files with same `task_id`
+- Updated document processing tests
+
+### Changed
+- File upload API now accepts optional `task_id` query parameter
+- Object name generation logic now supports both `{task_id}/{filename}` and `{user_id}/{filename}` patterns
+- File CRUD `create()` function now accepts optional `task_id` parameter
+
+### Fixed
+- Fixed indentation error in `document.py` compare_document_contents endpoint
+
 ## [Unreleased] - 2025-01-27
 
 ### Added

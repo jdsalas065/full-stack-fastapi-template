@@ -130,6 +130,10 @@ async def upload_file(
         # Validate file
         validate_file(file)
 
+        # After validation, filename is guaranteed to be non-None
+        assert file.filename is not None, "Filename must be present after validation"
+        filename = file.filename
+
         # Validate task_id if provided
         if task_id is not None:
             task_id = task_id.strip()
@@ -150,19 +154,19 @@ async def upload_file(
             )
 
         # Save to temp file first
-        temp_fd, temp_path = tempfile.mkstemp(suffix=Path(file.filename).suffix)
+        temp_fd, temp_path = tempfile.mkstemp(suffix=Path(filename).suffix)
         try:
             with os.fdopen(temp_fd, "wb") as f:
                 f.write(content)
 
             # Detect file type
-            file_type = document_processor.detect_file_type(file.filename)
+            file_type = document_processor.detect_file_type(filename)
 
             # Generate object name based on whether task_id is provided
             if task_id:
-                object_name = f"{task_id}/{file.filename}"
+                object_name = f"{task_id}/{filename}"
             else:
-                object_name = f"{user_id}/{file.filename}"
+                object_name = f"{user_id}/{filename}"
 
             # Upload to MinIO
             await storage_service.upload_file(
@@ -175,7 +179,7 @@ async def upload_file(
             file_data = file_crud.create(
                 session=session,
                 user_id=user_id,
-                filename=file.filename,
+                filename=filename,
                 file_type=file_type,
                 file_size=file_size,
                 object_name=object_name,
