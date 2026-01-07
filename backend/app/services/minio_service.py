@@ -7,6 +7,7 @@ Provides helper functions for managing submission files in MinIO storage.
 import asyncio
 import os
 import tempfile
+import time
 from pathlib import Path
 from uuid import UUID
 
@@ -66,8 +67,6 @@ async def upload_file_to_minio(
     # Generate unique filename to avoid collisions
     filename = file.filename or "unnamed"
     # Add timestamp prefix to make filename unique
-    import time
-
     timestamp = int(time.time() * 1000)
     unique_filename = f"{timestamp}_{filename}"
 
