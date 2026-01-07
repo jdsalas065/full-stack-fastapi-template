@@ -5,8 +5,6 @@ Provides high-level file operations that orchestrate CRUD and storage operations
 This service layer sits between API routes and the data/storage layers.
 """
 
-from uuid import UUID
-
 from sqlmodel import Session
 
 from app.core.logging import get_logger
