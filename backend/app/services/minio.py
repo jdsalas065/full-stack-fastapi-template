@@ -9,6 +9,8 @@ from app.core.config import settings
 
 
 class MinIOService:
+    _instance = None
+
     def __init__(self) -> None:
         self.client = Minio(
             settings.MINIO_URL,
@@ -96,5 +98,12 @@ class MinIOService:
             return False
 
 
-# Singleton instance
-minio_service = MinIOService()
+def get_minio_service() -> MinIOService:
+    """Get or create MinIO service instance (lazy initialization)."""
+    if MinIOService._instance is None:
+        MinIOService._instance = MinIOService()
+    return MinIOService._instance
+
+
+# Default instance for convenience
+minio_service = get_minio_service()

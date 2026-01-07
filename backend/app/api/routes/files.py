@@ -20,13 +20,12 @@ async def upload_file(
     session: SessionDep,
     current_user: CurrentUser,
     file: UploadFile = File(...),
-    task_id: str = Form(...),
+    submission_id: str = Form(...),
 ) -> SubmissionDocumentPublic:
     """
-    Upload a file to a submission or root folder (admin only).
+    Upload a file to an existing submission.
 
-    - task_id="root": Upload to root folder (admin only)
-    - task_id=<uuid>: Upload to existing submission with validation
+    - submission_id: UUID of the submission to upload to
     """
     # Pre-generate UUID for atomic operations
     document_id = uuid.uuid4()
@@ -36,46 +35,17 @@ async def upload_file(
     if not file_data:
         raise HTTPException(status_code=400, detail="Empty file")
 
-    # Handle "root" folder upload (admin only)
-    if task_id == "root":
-        if not current_user.is_superuser:
-            raise HTTPException(
-                status_code=403,
-                detail="Only administrators can upload to root folder",
-            )
-
-        try:
-            # Upload to MinIO
-            file_path, file_size = minio_service.upload_file(
-                file_data,
-                file.filename or "unnamed",
-                file.content_type or "application/octet-stream",
-                folder="root",
-            )
-
-            # Create document record without submission_id
-            # Note: This requires modifying the SubmissionDocument model to make submission_id nullable
-            # For now, we'll raise an error as the schema doesn't support it
-            raise HTTPException(
-                status_code=501,
-                detail="Root folder upload not fully implemented - requires schema changes",
-            )
-        except HTTPException:
-            raise
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
-
-    # Handle submission upload
+    # Parse and validate submission ID
     try:
-        submission_id = uuid.UUID(task_id)
+        submission_uuid = uuid.UUID(submission_id)
     except ValueError:
         raise HTTPException(
             status_code=400,
-            detail="Invalid task_id format. Must be a valid UUID or 'root'",
+            detail="Invalid submission_id format. Must be a valid UUID",
         )
 
     # Validate submission exists
-    submission = session.get(Submission, submission_id)
+    submission = session.get(Submission, submission_uuid)
     if not submission:
         raise HTTPException(status_code=404, detail="Submission not found")
 
@@ -87,19 +57,21 @@ async def upload_file(
         )
 
     # Upload file with rollback on error
+    uploaded_file_path = None
     try:
         # Upload to MinIO
         file_path, file_size = minio_service.upload_file(
             file_data,
             file.filename or "unnamed",
             file.content_type or "application/octet-stream",
-            folder=str(submission_id),
+            folder=str(submission_uuid),
         )
+        uploaded_file_path = file_path
 
         # Create document record in database
         document = SubmissionDocument(
             id=document_id,
-            submission_id=submission_id,
+            submission_id=submission_uuid,
             filename=file.filename or "unnamed",
             file_path=file_path,
             file_size=file_size,
@@ -112,11 +84,11 @@ async def upload_file(
         return document
     except Exception as e:
         # Rollback: delete file from MinIO if it was uploaded
-        try:
-            if "file_path" in locals():
-                minio_service.delete_file(file_path)
-        except Exception:
-            pass
+        if uploaded_file_path:
+            try:
+                minio_service.delete_file(uploaded_file_path)
+            except Exception:
+                pass
 
         # Rollback database changes
         session.rollback()
