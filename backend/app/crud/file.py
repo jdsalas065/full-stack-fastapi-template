@@ -4,7 +4,7 @@ File CRUD operations.
 Database-backed CRUD operations for file metadata.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlmodel import Session, select
@@ -24,6 +24,8 @@ def create(
     file_size: int,
     object_name: str,
     task_id: str | None = None,
+    file_id: str | None = None,
+    commit: bool = True,
 ) -> File:
     """
     Create a new file record.
@@ -36,11 +38,14 @@ def create(
         file_size: File size in bytes
         object_name: Object name in MinIO
         task_id: Optional task ID for document processing
+        file_id: Optional pre-generated file ID for atomic operations
+        commit: Whether to commit the transaction (default: True)
 
     Returns:
         File instance
     """
     db_obj = File(
+        id=file_id,  # Use provided file_id if available, otherwise model will generate
         user_id=user_id,
         filename=filename,
         file_type=file_type,
@@ -49,8 +54,9 @@ def create(
         task_id=task_id,
     )
     session.add(db_obj)
-    session.commit()
-    session.refresh(db_obj)
+    if commit:
+        session.commit()
+        session.refresh(db_obj)
     logger.info(f"Created file record: {db_obj.id}")
     return db_obj
 
@@ -138,7 +144,7 @@ def update(*, session: Session, file_id: str, **kwargs: Any) -> File | None:
     for key, value in kwargs.items():
         setattr(file, key, value)
 
-    file.updated_at = datetime.utcnow()
+    file.updated_at = datetime.now(timezone.utc)
     session.add(file)
     session.commit()
     session.refresh(file)

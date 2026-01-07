@@ -217,7 +217,7 @@ async def upload_file(
             upload_completed = True
 
             # Create file record in database with pre-generated UUID
-            # This uses the session transaction
+            # Use commit=False to keep within transaction for atomic operation
             file_data = file_crud.create(
                 session=session,
                 user_id=user_id,
@@ -226,15 +226,13 @@ async def upload_file(
                 file_size=file_size,
                 object_name=object_name,
                 task_id=task_id,
+                file_id=file_id,  # Use pre-generated UUID
+                commit=False,  # Don't commit yet - atomic operation
             )
 
-            # Verify the file_id matches (sanity check)
-            if file_data.id != file_id:
-                # This shouldn't happen with our current implementation,
-                # but we'll handle it by using the DB-generated ID
-                logger.warning(
-                    f"Pre-generated UUID {file_id} doesn't match DB ID {file_data.id}"
-                )
+            # Commit the transaction (both DB and MinIO succeed together)
+            session.commit()
+            session.refresh(file_data)
 
             return FileUploadResponse(
                 file_id=file_data.id,
@@ -255,7 +253,9 @@ async def upload_file(
                     logger.warning(f"Failed to delete temp file {temp_path}: {e}")
 
     except HTTPException:
-        # Rollback: Clean up MinIO if upload was completed
+        # Rollback DB transaction
+        session.rollback()
+        # Clean up MinIO if upload was completed
         if upload_completed and object_name:
             try:
                 logger.warning(
@@ -268,7 +268,9 @@ async def upload_file(
                 )
         raise
     except Exception as e:
-        # Rollback: Clean up MinIO if upload was completed
+        # Rollback DB transaction
+        session.rollback()
+        # Clean up MinIO if upload was completed
         if upload_completed and object_name:
             try:
                 logger.warning(

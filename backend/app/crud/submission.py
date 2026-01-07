@@ -4,7 +4,7 @@ Submission CRUD operations.
 Database-backed CRUD operations for submission and submission documents.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlmodel import Session, select
 
@@ -110,7 +110,7 @@ def update_submission(
     if status is not None:
         submission.status = status
 
-    submission.updated_at = datetime.utcnow()
+    submission.updated_at = datetime.now(timezone.utc)
     session.add(submission)
     session.commit()
     session.refresh(submission)
