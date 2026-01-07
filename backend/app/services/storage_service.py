@@ -185,6 +185,60 @@ class StorageService:
             logger.error(f"Error deleting file {object_name}: {e}")
             raise
 
+    async def get_presigned_download_url(
+        self, object_name: str, expires_in: int = 3600
+    ) -> str:
+        """
+        Get a presigned URL for downloading a file from MinIO.
+
+        Args:
+            object_name: Object name in MinIO
+            expires_in: URL expiration time in seconds (default: 1 hour)
+
+        Returns:
+            Presigned URL string
+
+        Raises:
+            S3Error: If MinIO operation fails
+        """
+        try:
+            from datetime import timedelta
+
+            url = await asyncio.to_thread(
+                self.client.presigned_get_object,
+                self.bucket,
+                object_name,
+                expires=timedelta(seconds=expires_in),
+            )
+            logger.info(f"Generated presigned URL for {object_name}")
+            return url
+        except S3Error as e:
+            logger.error(f"Error generating presigned URL for {object_name}: {e}")
+            raise
+
+    async def object_exists(self, object_name: str) -> bool:
+        """
+        Check if an object exists in MinIO.
+
+        Args:
+            object_name: Object name to check
+
+        Returns:
+            True if object exists, False otherwise
+        """
+        try:
+            await asyncio.to_thread(
+                self.client.stat_object,
+                self.bucket,
+                object_name,
+            )
+            return True
+        except S3Error as e:
+            if e.code == "NoSuchKey":
+                return False
+            logger.error(f"Error checking object existence {object_name}: {e}")
+            raise
+
     async def save_ocr_result(self, task_id: str, result_data: dict[str, Any]) -> str:
         """
         Save OCR extraction results to MinIO.

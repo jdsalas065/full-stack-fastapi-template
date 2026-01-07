@@ -15,6 +15,7 @@ When you add database integration:
 
 from app.models.file import File
 from app.models.item import Item
+from app.models.submission import Submission, SubmissionDocument
 from app.models.user import User
 
-__all__ = ["User", "Item", "File"]
+__all__ = ["User", "Item", "File", "Submission", "SubmissionDocument"]

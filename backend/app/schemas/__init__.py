@@ -14,6 +14,15 @@ from app.schemas.document import (
     DocumentSubmissionRequest,
     DocumentSubmissionResponse,
 )
+from app.schemas.submission import (
+    SubmissionCreate,
+    SubmissionDocumentCreate,
+    SubmissionDocumentPublic,
+    SubmissionListResponse,
+    SubmissionPublic,
+    SubmissionUpdate,
+    SubmissionWithDocuments,
+)
 
 __all__ = [
     "Message",
@@ -21,4 +30,11 @@ __all__ = [
     "DocumentSubmissionResponse",
     "CompareDocumentRequest",
     "CompareDocumentResponse",
+    "SubmissionCreate",
+    "SubmissionUpdate",
+    "SubmissionPublic",
+    "SubmissionListResponse",
+    "SubmissionWithDocuments",
+    "SubmissionDocumentCreate",
+    "SubmissionDocumentPublic",
 ]
