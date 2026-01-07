@@ -11,9 +11,7 @@ Implements file CRUD operations:
 """
 
 import os
-import tempfile
 from pathlib import Path
-from typing import cast
 from uuid import UUID
 
 from fastapi import (
@@ -101,7 +99,9 @@ async def upload_file(
     session: SessionDep,
     current_user: CurrentUser,
     file: UploadFile = File(...),
-    task_id: str = Query(..., description="Task ID for file upload (use 'root' for root directory)"),
+    task_id: str = Query(
+        ..., description="Task ID for file upload (use 'root' for root directory)"
+    ),
 ) -> FileUploadResponse:
     """
     Upload a file to MinIO storage.
@@ -123,8 +123,6 @@ async def upload_file(
     try:
         # Validate file
         validate_file(file)
-        # After validation, filename is guaranteed to be non-empty string (type narrowing)
-        filename = cast(str, file.filename)
 
         # Validate task_id
         task_id = task_id.strip()
@@ -142,16 +140,18 @@ async def upload_file(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Only superusers can upload to root directory",
                 )
-            
+
             # Upload to root (no submission record created)
             file_metadata = await upload_file_to_minio(task_id, file)
-            
+
             # Create file record in database
             file_data = file_crud.create(
                 session=session,
                 user_id=current_user.id,
                 filename=file_metadata["file_name"],
-                file_type=document_processor.detect_file_type(file_metadata["file_name"]),
+                file_type=document_processor.detect_file_type(
+                    file_metadata["file_name"]
+                ),
                 file_size=file_metadata["file_size"],
                 object_name=file_metadata["file_path"],
                 task_id="root",
@@ -243,7 +243,9 @@ async def upload_file(
     summary="List files",
     description="List all files uploaded by the current user.",
 )
-async def list_files(session: SessionDep, current_user: CurrentUser) -> FileListResponse:
+async def list_files(
+    session: SessionDep, current_user: CurrentUser
+) -> FileListResponse:
     """
     List all files for the current user.
 
@@ -284,7 +286,9 @@ async def list_files(session: SessionDep, current_user: CurrentUser) -> FileList
     summary="Get file details",
     description="Get details of a specific file.",
 )
-async def get_file(file_id: str, session: SessionDep, current_user: CurrentUser) -> FileInfo:
+async def get_file(
+    file_id: str, session: SessionDep, current_user: CurrentUser
+) -> FileInfo:
     """
     Get file details.
 
@@ -336,7 +340,9 @@ async def get_file(file_id: str, session: SessionDep, current_user: CurrentUser)
     summary="Download file",
     description="Download a file from storage.",
 )
-async def download_file(file_id: str, session: SessionDep, current_user: CurrentUser) -> FileResponse:
+async def download_file(
+    file_id: str, session: SessionDep, current_user: CurrentUser
+) -> FileResponse:
     """
     Download a file.
 
@@ -363,9 +369,7 @@ async def download_file(file_id: str, session: SessionDep, current_user: Current
             )
 
         # Download from MinIO to temp file
-        temp_path = await storage_service.download_file_to_temp(
-            file_data.object_name
-        )
+        temp_path = await storage_service.download_file_to_temp(file_data.object_name)
 
         return FileResponse(
             path=temp_path,
@@ -395,7 +399,9 @@ async def download_file(file_id: str, session: SessionDep, current_user: Current
     summary="Delete file",
     description="Delete a file from storage.",
 )
-async def delete_file(file_id: str, session: SessionDep, current_user: CurrentUser) -> FileDeleteResponse:
+async def delete_file(
+    file_id: str, session: SessionDep, current_user: CurrentUser
+) -> FileDeleteResponse:
     """
     Delete a file.
 
@@ -480,9 +486,7 @@ async def process_file(
             )
 
         # Download file to temp
-        temp_path = await storage_service.download_file_to_temp(
-            file_data.object_name
-        )
+        temp_path = await storage_service.download_file_to_temp(file_data.object_name)
 
         # Process file
         result = await document_processor.process_file_from_path(

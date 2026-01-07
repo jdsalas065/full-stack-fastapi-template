@@ -77,9 +77,7 @@ async def create_submission(
         try:
             for file in files:
                 # Upload to MinIO
-                file_metadata = await minio_service.upload_file_to_minio(
-                    task_id, file
-                )
+                file_metadata = await minio_service.upload_file_to_minio(task_id, file)
 
                 # Create document record
                 doc = SubmissionDocument(

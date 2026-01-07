@@ -26,7 +26,9 @@ def mock_minio_service():
         yield mock
 
 
-def test_create_submission_happy_path(client: TestClient, mock_minio_service: AsyncMock) -> None:
+def test_create_submission_happy_path(
+    client: TestClient, mock_minio_service: AsyncMock
+) -> None:
     """Test successful submission creation with files."""
     # Create test files
     file_content = b"Test PDF content"
@@ -34,7 +36,7 @@ def test_create_submission_happy_path(client: TestClient, mock_minio_service: As
         ("files", ("invoice.pdf", BytesIO(file_content), "application/pdf")),
         ("files", ("receipt.pdf", BytesIO(file_content), "application/pdf")),
     ]
-    
+
     data = {
         "name": "Test Submission",
         "description": "Test description",
@@ -45,7 +47,7 @@ def test_create_submission_happy_path(client: TestClient, mock_minio_service: As
 
     assert response.status_code == 201
     json_data = response.json()
-    
+
     # Verify response structure
     assert "id" in json_data
     assert json_data["name"] == "Test Submission"
@@ -54,7 +56,7 @@ def test_create_submission_happy_path(client: TestClient, mock_minio_service: As
     assert "owner_id" in json_data
     assert "created_at" in json_data
     assert "documents" in json_data
-    
+
     # Verify documents were created
     assert len(json_data["documents"]) == 2
     for doc in json_data["documents"]:
@@ -85,7 +87,7 @@ def test_create_submission_without_name(client: TestClient) -> None:
     files = [
         ("files", ("invoice.pdf", BytesIO(file_content), "application/pdf")),
     ]
-    
+
     data = {
         "description": "Test description",
     }
@@ -96,14 +98,16 @@ def test_create_submission_without_name(client: TestClient) -> None:
     assert response.status_code == 422
 
 
-def test_get_submission_by_id(client: TestClient, mock_minio_service: AsyncMock) -> None:
+def test_get_submission_by_id(
+    client: TestClient, mock_minio_service: AsyncMock
+) -> None:
     """Test getting submission by ID."""
     # First create a submission
     file_content = b"Test PDF content"
     files = [
         ("files", ("invoice.pdf", BytesIO(file_content), "application/pdf")),
     ]
-    
+
     data = {
         "name": "Test Submission",
         "description": "Test description",
@@ -115,7 +119,7 @@ def test_get_submission_by_id(client: TestClient, mock_minio_service: AsyncMock)
 
     # Now get the submission
     get_response = client.get(f"/api/v1/submissions/{submission_id}")
-    
+
     assert get_response.status_code == 200
     json_data = get_response.json()
     assert json_data["id"] == submission_id
@@ -128,19 +132,21 @@ def test_get_nonexistent_submission(client: TestClient) -> None:
     """Test getting non-existent submission returns 404."""
     fake_id = str(uuid4())
     response = client.get(f"/api/v1/submissions/{fake_id}")
-    
+
     assert response.status_code == 404
     assert "not found" in response.json()["detail"].lower()
 
 
-def test_get_submission_access_denied(client: TestClient, mock_minio_service: AsyncMock) -> None:
+def test_get_submission_access_denied(
+    client: TestClient, mock_minio_service: AsyncMock
+) -> None:
     """Test that non-owners cannot access submission (if multiple users exist)."""
     # This test assumes the test client uses a default user
     # For a proper test, we would need to:
     # 1. Create submission with user A
     # 2. Try to access with user B
     # 3. Verify 403 response
-    # 
+    #
     # Since the test setup uses a single user, we'll skip this for now
     # or implement when multi-user test fixtures are available
     pass
