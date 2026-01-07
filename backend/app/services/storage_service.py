@@ -31,7 +31,7 @@ logger = get_logger(__name__)
 class StorageService:
     """
     MinIO storage service with temp file support.
-    
+
     This is the canonical service layer for all MinIO operations.
     All routes should use this service instead of directly accessing MinIO.
     """
@@ -50,7 +50,7 @@ class StorageService:
         Ensure the bucket exists in MinIO.
 
         Creates the bucket if it doesn't exist.
-        
+
         Raises:
             S3Error: If MinIO operation fails
         """
@@ -240,7 +240,7 @@ class StorageService:
     async def get_file_stream(self, object_name: str) -> BytesIO:
         """
         Get file as stream (in-memory, no disk I/O).
-        
+
         DEPRECATED: Use download_file_to_temp instead.
 
         Args:
