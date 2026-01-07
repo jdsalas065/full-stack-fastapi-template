@@ -105,6 +105,8 @@ class StorageService:
         # Read file content
         content = await file.read()
         file_size = len(content)
+        # Reset file pointer in case the UploadFile is reused elsewhere
+        await file.seek(0)
 
         # Save to temp file
         temp_fd, temp_path = tempfile.mkstemp(suffix=Path(filename).suffix)
