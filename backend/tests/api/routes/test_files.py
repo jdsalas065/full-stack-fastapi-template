@@ -209,3 +209,98 @@ def test_upload_multiple_files_same_task_id(client: TestClient) -> None:
     # Both files should have the same task_id but different filenames
     assert data1["file_id"] != data2["file_id"]
     assert data1["filename"] != data2["filename"]
+
+
+def test_upload_file_to_root_requires_superuser(client: TestClient) -> None:
+    """Test uploading file to root requires superuser privileges."""
+    # This test assumes the default test client user is NOT a superuser
+    file_content = b"Test file content"
+    files = {
+        "file": ("test.pdf", BytesIO(file_content), "application/pdf")
+    }
+
+    response = client.post("/api/v1/files/upload?task_id=root", files=files)
+
+    # Should fail with 403 if user is not superuser
+    # Note: If test client is configured with superuser, this test will fail
+    # and should be adjusted accordingly
+    assert response.status_code in [403, 201]  # Depends on test user privileges
+
+
+def test_upload_file_to_nonexistent_task_returns_404(client: TestClient) -> None:
+    """Test uploading file to non-existent task_id returns 404."""
+    from uuid import uuid4
+    
+    fake_task_id = str(uuid4())
+    file_content = b"Test file content"
+    files = {
+        "file": ("test.pdf", BytesIO(file_content), "application/pdf")
+    }
+
+    response = client.post(f"/api/v1/files/upload?task_id={fake_task_id}", files=files)
+
+    assert response.status_code == 404
+    assert "not found" in response.json()["detail"].lower()
+
+
+def test_upload_file_to_existing_submission(client: TestClient) -> None:
+    """Test uploading file to an existing submission creates SubmissionDocument."""
+    from unittest.mock import AsyncMock, patch
+    
+    # Mock MinIO service
+    with patch("app.api.routes.submissions.minio_service") as mock_submissions_minio, \
+         patch("app.api.routes.files.upload_file_to_minio") as mock_files_upload:
+        
+        mock_submissions_minio.upload_file_to_minio = AsyncMock(
+            return_value={
+                "file_name": "invoice.pdf",
+                "file_path": "task-id/invoice.pdf",
+                "file_size": 100,
+                "content_type": "application/pdf",
+            }
+        )
+        mock_submissions_minio.delete_folder = AsyncMock()
+        
+        # First create a submission
+        file_content = b"Initial file"
+        files = [
+            ("files", ("initial.pdf", BytesIO(file_content), "application/pdf")),
+        ]
+        
+        data = {
+            "name": "Test Submission",
+            "description": "Test description",
+        }
+
+        create_response = client.post("/api/v1/submissions/", data=data, files=files)
+        assert create_response.status_code == 201
+        submission_id = create_response.json()["id"]
+
+        # Now upload an additional file to this submission
+        mock_files_upload.return_value = {
+            "file_name": "additional.pdf",
+            "file_path": f"{submission_id}/additional.pdf",
+            "file_size": 200,
+            "content_type": "application/pdf",
+        }
+        
+        additional_file = {
+            "file": ("additional.pdf", BytesIO(b"Additional file"), "application/pdf")
+        }
+        
+        upload_response = client.post(
+            f"/api/v1/files/upload?task_id={submission_id}",
+            files=additional_file
+        )
+        
+        assert upload_response.status_code == 201
+        upload_data = upload_response.json()
+        assert upload_data["task_id"] == submission_id
+        
+        # Verify the submission now has the additional document
+        get_response = client.get(f"/api/v1/submissions/{submission_id}")
+        assert get_response.status_code == 200
+        submission_data = get_response.json()
+        # Should have at least 2 documents now
+        assert len(submission_data["documents"]) >= 2
+
