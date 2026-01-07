@@ -22,7 +22,7 @@ from app.core.constants import Tags
 from app.core.logging import get_logger
 from app.models.submission import Submission, SubmissionDocument
 from app.schemas.submission import SubmissionDocumentPublic, SubmissionPublic
-from app.services import minio_service
+from app.services.storage_service import storage_service
 
 logger = get_logger(__name__)
 
@@ -77,7 +77,7 @@ async def create_submission(
         try:
             for file in files:
                 # Upload to MinIO
-                file_metadata = await minio_service.upload_file_to_minio(task_id, file)
+                file_metadata = await storage_service.upload_file_from_upload(task_id, file)
 
                 # Create document record
                 doc = SubmissionDocument(
@@ -122,7 +122,7 @@ async def create_submission(
 
             # Delete uploaded files from MinIO
             try:
-                await minio_service.delete_folder(task_id)
+                await storage_service.delete_folder(task_id)
             except Exception as cleanup_error:
                 logger.error(
                     f"Failed to cleanup MinIO folder {task_id}: {cleanup_error}"

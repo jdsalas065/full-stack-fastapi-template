@@ -153,12 +153,12 @@ def test_upload_multiple_files_same_task_id(client: TestClient) -> None:
     """Test uploading multiple files with the same submission task_id."""
     from unittest.mock import AsyncMock, patch
 
-    # Mock MinIO service for both submissions and file uploads
+    # Mock storage service for both submissions and file uploads
     with (
-        patch("app.api.routes.submissions.minio_service") as mock_submissions_minio,
-        patch("app.api.routes.files.upload_file_to_minio") as mock_files_upload,
+        patch("app.api.routes.submissions.storage_service") as mock_submissions_storage,
+        patch("app.api.routes.files.storage_service") as mock_files_storage,
     ):
-        mock_submissions_minio.upload_file_to_minio = AsyncMock(
+        mock_submissions_storage.upload_file_from_upload = AsyncMock(
             return_value={
                 "file_name": "invoice.pdf",
                 "file_path": "task-id/invoice.pdf",
@@ -166,7 +166,7 @@ def test_upload_multiple_files_same_task_id(client: TestClient) -> None:
                 "content_type": "application/pdf",
             }
         )
-        mock_submissions_minio.delete_folder = AsyncMock()
+        mock_submissions_storage.delete_folder = AsyncMock()
 
         # First create a submission with initial file
         file_content = b"Initial file"
@@ -191,7 +191,7 @@ def test_upload_multiple_files_same_task_id(client: TestClient) -> None:
                 }
             )()
 
-        mock_files_upload.side_effect = mock_upload_side_effect
+        mock_files_storage.upload_file_from_upload.side_effect = mock_upload_side_effect
 
         # Upload first additional file
         additional_file1 = {
@@ -255,12 +255,12 @@ def test_upload_file_to_existing_submission(client: TestClient) -> None:
     """Test uploading file to an existing submission creates SubmissionDocument."""
     from unittest.mock import AsyncMock, patch
 
-    # Mock MinIO service
+    # Mock storage service
     with (
-        patch("app.api.routes.submissions.minio_service") as mock_submissions_minio,
-        patch("app.api.routes.files.upload_file_to_minio") as mock_files_upload,
+        patch("app.api.routes.submissions.storage_service") as mock_submissions_storage,
+        patch("app.api.routes.files.storage_service") as mock_files_storage,
     ):
-        mock_submissions_minio.upload_file_to_minio = AsyncMock(
+        mock_submissions_storage.upload_file_from_upload = AsyncMock(
             return_value={
                 "file_name": "invoice.pdf",
                 "file_path": "task-id/invoice.pdf",
@@ -268,7 +268,7 @@ def test_upload_file_to_existing_submission(client: TestClient) -> None:
                 "content_type": "application/pdf",
             }
         )
-        mock_submissions_minio.delete_folder = AsyncMock()
+        mock_submissions_storage.delete_folder = AsyncMock()
 
         # First create a submission
         file_content = b"Initial file"
@@ -286,7 +286,7 @@ def test_upload_file_to_existing_submission(client: TestClient) -> None:
         submission_id = create_response.json()["id"]
 
         # Now upload an additional file to this submission
-        mock_files_upload.return_value = {
+        mock_files_storage.upload_file_from_upload.return_value = {
             "file_name": "additional.pdf",
             "file_path": f"{submission_id}/additional.pdf",
             "file_size": 200,

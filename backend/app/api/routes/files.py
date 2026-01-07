@@ -38,7 +38,6 @@ from app.schemas.file import (
     FileUploadResponse,
 )
 from app.services.document_processor import document_processor
-from app.services.minio_service import upload_file_to_minio
 from app.services.storage_service import storage_service
 
 logger = get_logger(__name__)
@@ -142,7 +141,7 @@ async def upload_file(
                 )
 
             # Upload to root (no submission record created)
-            file_metadata = await upload_file_to_minio(task_id, file)
+            file_metadata = await storage_service.upload_file_from_upload(task_id, file)
 
             # Create file record in database
             file_data = file_crud.create(
@@ -192,7 +191,7 @@ async def upload_file(
             )
 
         # Upload file to MinIO
-        file_metadata = await upload_file_to_minio(task_id, file)
+        file_metadata = await storage_service.upload_file_from_upload(task_id, file)
 
         # Create SubmissionDocument record
         doc = SubmissionDocument(
