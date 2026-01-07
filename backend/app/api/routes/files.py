@@ -14,6 +14,7 @@ import os
 import tempfile
 from pathlib import Path
 from typing import cast
+from uuid import uuid4
 
 from fastapi import (
     APIRouter,
@@ -28,6 +29,7 @@ from app.api.dependencies import SessionDep
 from app.core.constants import Tags
 from app.core.logging import get_logger
 from app.crud import file as file_crud
+from app.crud import submission as submission_crud
 from app.schemas.file import (
     FileDeleteResponse,
     FileInfo,
@@ -66,8 +68,18 @@ def get_current_user_id() -> str:
     """
     Get current user ID.
 
-    TODO: Replace with actual authentication.
-    For now, return a default user ID.
+    SECURITY WARNING: This is a placeholder implementation for development/testing.
+    In production, this MUST be replaced with proper authentication that:
+    1. Validates user credentials (JWT token, session, OAuth, etc.)
+    2. Returns the actual authenticated user's ID
+    3. Handles unauthorized access appropriately
+
+    Current implementation returns a hardcoded value which means:
+    - All operations are attributed to the same user
+    - No user isolation or access control
+    - DO NOT use in production!
+
+    TODO: Replace with actual authentication (e.g., from JWT token in Authorization header)
     """
     return "default-user"
 
@@ -134,10 +146,6 @@ async def upload_file(
     Returns:
         FileUploadResponse with file metadata
     """
-    from uuid import uuid4
-
-    from app.crud import submission as submission_crud
-
     # Pre-generate UUID before any operations (atomic operation requirement)
     file_id = str(uuid4())
     temp_path = None
@@ -164,9 +172,15 @@ async def upload_file(
 
             # Special handling for "root" folder (admin only)
             if task_id == "root":
+                # SECURITY WARNING: This feature should only be available to admins
                 # TODO: Add admin check here when authentication is implemented
-                # For now, allow root uploads
-                logger.info(f"Uploading to root folder by user: {user_id}")
+                # Current implementation allows ANY user to upload to root folder
+                # This is a placeholder for development/testing purposes only
+                # DO NOT use in production without proper authentication!
+                logger.warning(
+                    f"SECURITY: Uploading to root folder by user: {user_id} - "
+                    "This should be restricted to admins in production!"
+                )
             else:
                 # Validate that task_id exists in submissions table
                 submission = submission_crud.get_submission_by_task_id(

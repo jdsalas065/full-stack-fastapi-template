@@ -9,6 +9,7 @@ import asyncio
 import json
 import os
 import tempfile
+from datetime import timedelta
 from io import BytesIO
 from pathlib import Path
 from typing import Any
@@ -107,7 +108,7 @@ class StorageService:
     async def get_file_stream(self, object_name: str) -> BytesIO:
         """
         Get file as stream (in-memory, no disk I/O).
-        
+
         DEPRECATED: Use download_file_to_temp instead.
 
         Args:
@@ -202,8 +203,6 @@ class StorageService:
             S3Error: If MinIO operation fails
         """
         try:
-            from datetime import timedelta
-
             url = await asyncio.to_thread(
                 self.client.presigned_get_object,
                 self.bucket,

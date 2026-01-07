@@ -33,8 +33,18 @@ def get_current_user_id() -> str:
     """
     Get current user ID.
 
-    TODO: Replace with actual authentication.
-    For now, return a default user ID.
+    SECURITY WARNING: This is a placeholder implementation for development/testing.
+    In production, this MUST be replaced with proper authentication that:
+    1. Validates user credentials (JWT token, session, OAuth, etc.)
+    2. Returns the actual authenticated user's ID
+    3. Handles unauthorized access appropriately
+
+    Current implementation returns a hardcoded value which means:
+    - All operations are attributed to the same user
+    - No user isolation or access control
+    - DO NOT use in production!
+
+    TODO: Replace with actual authentication (e.g., from JWT token in Authorization header)
     """
     return "default-user"
 

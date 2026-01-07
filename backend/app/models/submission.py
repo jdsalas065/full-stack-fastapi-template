@@ -22,6 +22,9 @@ class Submission(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Relationships
+    # NOTE: cascade_delete=True will automatically delete all associated SubmissionDocuments
+    # when a Submission is deleted. While convenient, this could lead to unintended data loss.
+    # Consider implementing soft deletes or requiring explicit confirmation in production.
     documents: list["SubmissionDocument"] = Relationship(back_populates="submission", cascade_delete=True)
 
 
