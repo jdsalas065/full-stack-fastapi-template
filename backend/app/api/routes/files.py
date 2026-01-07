@@ -9,7 +9,7 @@ from app.models import (
     SubmissionDocument,
     SubmissionDocumentPublic,
 )
-from app.services.minio import minio_service
+from app.services.minio import get_minio_service
 
 router = APIRouter(prefix="/files", tags=["files"])
 
@@ -58,6 +58,7 @@ async def upload_file(
 
     # Upload file with rollback on error
     uploaded_file_path = None
+    minio_service = get_minio_service()
     try:
         # Upload to MinIO
         file_path, file_size = minio_service.upload_file(
@@ -88,6 +89,8 @@ async def upload_file(
             try:
                 minio_service.delete_file(uploaded_file_path)
             except Exception:
+                # Log the error but continue with the original exception
+                # In production, use proper logging
                 pass
 
         # Rollback database changes
@@ -124,6 +127,7 @@ def get_download_url(
         )
 
     try:
+        minio_service = get_minio_service()
         url = minio_service.get_presigned_url(document.file_path)
         return {"download_url": url}
     except Exception as e:
@@ -157,11 +161,13 @@ def delete_file(
             detail="Not enough permissions to delete this file",
         )
 
+    minio_service = get_minio_service()
     try:
         # Delete from MinIO
         minio_service.delete_file(document.file_path)
     except Exception:
         # Continue with DB deletion even if MinIO deletion fails
+        # In production, use proper logging
         pass
 
     # Delete from database

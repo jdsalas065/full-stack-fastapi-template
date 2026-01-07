@@ -1,6 +1,7 @@
 import uuid
 from datetime import timedelta
 from io import BytesIO
+from threading import Lock
 
 from minio import Minio
 from minio.error import S3Error
@@ -10,6 +11,7 @@ from app.core.config import settings
 
 class MinIOService:
     _instance = None
+    _lock = Lock()
 
     def __init__(self) -> None:
         self.client = Minio(
@@ -97,13 +99,18 @@ class MinIOService:
         except S3Error:
             return False
 
+    @classmethod
+    def get_instance(cls) -> "MinIOService":
+        """Get or create MinIO service instance (thread-safe lazy initialization)."""
+        if cls._instance is None:
+            with cls._lock:
+                # Double-check locking pattern
+                if cls._instance is None:
+                    cls._instance = cls()
+        return cls._instance
+
 
 def get_minio_service() -> MinIOService:
-    """Get or create MinIO service instance (lazy initialization)."""
-    if MinIOService._instance is None:
-        MinIOService._instance = MinIOService()
-    return MinIOService._instance
+    """Get MinIO service instance (lazy initialization)."""
+    return MinIOService.get_instance()
 
-
-# Default instance for convenience
-minio_service = get_minio_service()

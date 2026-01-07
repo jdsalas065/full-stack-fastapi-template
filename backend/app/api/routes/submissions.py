@@ -14,7 +14,7 @@ from app.models import (
     SubmissionsPublic,
     SubmissionUpdate,
 )
-from app.services.minio import minio_service
+from app.services.minio import get_minio_service
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
@@ -121,11 +121,14 @@ def delete_submission(
     documents = session.exec(
         select(SubmissionDocument).where(SubmissionDocument.submission_id == id)
     ).all()
+    minio_service = get_minio_service()
     for doc in documents:
         try:
             minio_service.delete_file(doc.file_path)
         except Exception:
-            pass  # Continue even if file deletion fails
+            # Log the error but continue with deletion
+            # In production, use proper logging
+            pass
 
     # Delete submission (cascade will handle documents in DB)
     session.delete(submission)
