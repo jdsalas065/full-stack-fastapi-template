@@ -38,8 +38,14 @@ from app.schemas.file import (
     FileUploadResponse,
 )
 from app.services.document_processor import document_processor
+from app.services.file_service import (
+    delete_file_for_user,
+    download_file_for_user,
+    get_file_details,
+    list_user_files,
+    process_file_for_user,
+)
 from app.services.minio_service import upload_file_to_minio
-from app.services.storage_service import storage_service
 
 logger = get_logger(__name__)
 
@@ -253,7 +259,7 @@ async def list_files(
         FileListResponse with list of files
     """
     try:
-        files = file_crud.list_by_user(session=session, user_id=current_user.id)
+        files = await list_user_files(session=session, user_id=current_user.id)
 
         file_infos = [
             FileInfo(
@@ -299,18 +305,13 @@ async def get_file(
         FileInfo with file details
     """
     try:
-        file_data = file_crud.get(session=session, file_id=file_id)
+        file_data = await get_file_details(
+            session=session, file_id=file_id, user_id=current_user.id
+        )
         if not file_data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"File not found: {file_id}",
-            )
-
-        # Verify user owns the file
-        if file_data.user_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied",
             )
 
         return FileInfo(
@@ -354,22 +355,14 @@ async def download_file(
     """
     temp_path = None
     try:
-        file_data = file_crud.get(session=session, file_id=file_id)
-        if not file_data:
+        file_data, temp_path = await download_file_for_user(
+            session=session, file_id=file_id, user_id=current_user.id
+        )
+        if not file_data or not temp_path:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"File not found: {file_id}",
             )
-
-        # Verify user owns the file
-        if file_data.user_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied",
-            )
-
-        # Download from MinIO to temp file
-        temp_path = await storage_service.download_file_to_temp(file_data.object_name)
 
         return FileResponse(
             path=temp_path,
@@ -412,25 +405,14 @@ async def delete_file(
         FileDeleteResponse with deletion status
     """
     try:
-        file_data = file_crud.get(session=session, file_id=file_id)
-        if not file_data:
+        success = await delete_file_for_user(
+            session=session, file_id=file_id, user_id=current_user.id
+        )
+        if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"File not found: {file_id}",
             )
-
-        # Verify user owns the file
-        if file_data.user_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied",
-            )
-
-        # Delete from MinIO
-        await storage_service.delete_file(file_data.object_name)
-
-        # Delete from database
-        file_crud.delete(session=session, file_id=file_id)
 
         return FileDeleteResponse(
             message="File deleted successfully",
@@ -471,22 +453,14 @@ async def process_file(
     """
     temp_path = None
     try:
-        file_data = file_crud.get(session=session, file_id=file_id)
-        if not file_data:
+        file_data, temp_path = await process_file_for_user(
+            session=session, file_id=file_id, user_id=current_user.id
+        )
+        if not file_data or not temp_path:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"File not found: {file_id}",
             )
-
-        # Verify user owns the file
-        if file_data.user_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied",
-            )
-
-        # Download file to temp
-        temp_path = await storage_service.download_file_to_temp(file_data.object_name)
 
         # Process file
         result = await document_processor.process_file_from_path(
