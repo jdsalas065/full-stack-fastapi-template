@@ -259,7 +259,7 @@ async def list_files(
         FileListResponse with list of files
     """
     try:
-        files = await list_user_files(session=session, user_id=current_user.id)
+        files = list_user_files(session=session, user_id=current_user.id)
 
         file_infos = [
             FileInfo(

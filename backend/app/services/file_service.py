@@ -15,7 +15,32 @@ from app.services.storage_service import storage_service
 logger = get_logger(__name__)
 
 
-async def list_user_files(session: Session, user_id: str) -> list[File]:
+def _get_file_with_permission_check(
+    session: Session, file_id: str, user_id: str
+) -> File | None:
+    """
+    Get file and verify user has permission to access it.
+
+    Args:
+        session: Database session
+        file_id: File ID
+        user_id: User ID for permission check
+
+    Returns:
+        File instance if found and user has access, None otherwise
+    """
+    file_data = file_crud.get(session=session, file_id=file_id)
+    if not file_data:
+        return None
+
+    # Verify user owns the file
+    if file_data.user_id != user_id:
+        return None
+
+    return file_data
+
+
+def list_user_files(session: Session, user_id: str) -> list[File]:
     """
     List all files for a user.
 
@@ -43,15 +68,7 @@ async def get_file_details(
     Returns:
         File instance if found and user has access, None otherwise
     """
-    file_data = file_crud.get(session=session, file_id=file_id)
-    if not file_data:
-        return None
-
-    # Verify user owns the file
-    if file_data.user_id != user_id:
-        return None
-
-    return file_data
+    return _get_file_with_permission_check(session, file_id, user_id)
 
 
 async def download_file_for_user(
@@ -59,6 +76,8 @@ async def download_file_for_user(
 ) -> tuple[File, str] | tuple[None, None]:
     """
     Download a file for a user.
+
+    This function is used for both downloading and processing files.
 
     Args:
         session: Database session
@@ -68,12 +87,8 @@ async def download_file_for_user(
     Returns:
         Tuple of (File instance, temp file path) if successful, (None, None) otherwise
     """
-    file_data = file_crud.get(session=session, file_id=file_id)
+    file_data = _get_file_with_permission_check(session, file_id, user_id)
     if not file_data:
-        return None, None
-
-    # Verify user owns the file
-    if file_data.user_id != user_id:
         return None, None
 
     # Download from MinIO to temp file
@@ -99,12 +114,8 @@ async def delete_file_for_user(
     Returns:
         True if deleted successfully, False otherwise
     """
-    file_data = file_crud.get(session=session, file_id=file_id)
+    file_data = _get_file_with_permission_check(session, file_id, user_id)
     if not file_data:
-        return False
-
-    # Verify user owns the file
-    if file_data.user_id != user_id:
         return False
 
     # Delete from MinIO
@@ -119,32 +130,5 @@ async def delete_file_for_user(
     return True
 
 
-async def process_file_for_user(
-    session: Session, file_id: str, user_id: str
-) -> tuple[File, str] | tuple[None, None]:
-    """
-    Prepare a file for processing by downloading it.
-
-    Args:
-        session: Database session
-        file_id: File ID
-        user_id: User ID for permission check
-
-    Returns:
-        Tuple of (File instance, temp file path) if successful, (None, None) otherwise
-    """
-    file_data = file_crud.get(session=session, file_id=file_id)
-    if not file_data:
-        return None, None
-
-    # Verify user owns the file
-    if file_data.user_id != user_id:
-        return None, None
-
-    # Download file to temp for processing
-    try:
-        temp_path = await storage_service.download_file_to_temp(file_data.object_name)
-        return file_data, temp_path
-    except Exception as e:
-        logger.error(f"Error downloading file for processing {file_id}: {e}")
-        return None, None
+# Alias for backward compatibility and semantic clarity
+process_file_for_user = download_file_for_user
