@@ -11,23 +11,24 @@ Implements file CRUD operations:
 """
 
 import os
-import tempfile
 from pathlib import Path
-from typing import cast
+from uuid import UUID
 
 from fastapi import (
     APIRouter,
     File,
     HTTPException,
+    Query,
     UploadFile,
     status,
 )
 from fastapi.responses import FileResponse
 
-from app.api.dependencies import SessionDep
+from app.api.dependencies import CurrentUser, SessionDep
 from app.core.constants import Tags
 from app.core.logging import get_logger
 from app.crud import file as file_crud
+from app.models.submission import Submission, SubmissionDocument
 from app.schemas.file import (
     FileDeleteResponse,
     FileInfo,
@@ -37,6 +38,7 @@ from app.schemas.file import (
     FileUploadResponse,
 )
 from app.services.document_processor import document_processor
+from app.services.minio_service import upload_file_to_minio
 from app.services.storage_service import storage_service
 
 logger = get_logger(__name__)
@@ -60,16 +62,6 @@ SUPPORTED_EXTENSIONS = {
 
 # Max file size: 50MB
 MAX_FILE_SIZE = 50 * 1024 * 1024
-
-
-def get_current_user_id() -> str:
-    """
-    Get current user ID.
-
-    TODO: Replace with actual authentication.
-    For now, return a default user ID.
-    """
-    return "default-user"
 
 
 def validate_file(file: UploadFile) -> None:
@@ -105,8 +97,11 @@ def validate_file(file: UploadFile) -> None:
 )
 async def upload_file(
     session: SessionDep,
+    current_user: CurrentUser,
     file: UploadFile = File(...),
-    task_id: str | None = None,
+    task_id: str = Query(
+        ..., description="Task ID for file upload (use 'root' for root directory)"
+    ),
 ) -> FileUploadResponse:
     """
     Upload a file to MinIO storage.
@@ -116,73 +111,50 @@ async def upload_file(
 
     Args:
         session: Database session
+        current_user: Current authenticated user
         file: File to upload
-        task_id: Optional task ID for document processing.
-                 If provided, file will be stored as {task_id}/{filename}.
-                 If not provided, file will be stored as {user_id}/{filename}.
+        task_id: Required task ID for document processing.
+                 If "root", file will be stored in root directory (superuser only).
+                 Otherwise, must be a valid submission ID.
 
     Returns:
         FileUploadResponse with file metadata
     """
     try:
-        # Get current user
-        user_id = get_current_user_id()
-
         # Validate file
         validate_file(file)
-        # After validation, filename is guaranteed to be non-empty string (type narrowing)
-        filename = cast(str, file.filename)
 
-        # Validate task_id if provided
-        if task_id is not None:
-            task_id = task_id.strip()
-            if not task_id:
+        # Validate task_id
+        task_id = task_id.strip()
+        if not task_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="task_id cannot be empty",
+            )
+
+        # Handle special "root" case
+        if task_id == "root":
+            # Only superusers can upload to root
+            if not current_user.is_superuser:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="task_id cannot be empty",
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Only superusers can upload to root directory",
                 )
 
-        # Read file content
-        content = await file.read()
-        file_size = len(content)
-
-        if file_size > MAX_FILE_SIZE:
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"File too large. Max size: {MAX_FILE_SIZE / 1024 / 1024}MB",
-            )
-
-        # Save to temp file first
-        temp_fd, temp_path = tempfile.mkstemp(suffix=Path(filename).suffix)
-        try:
-            with os.fdopen(temp_fd, "wb") as f:
-                f.write(content)
-
-            # Detect file type
-            file_type = document_processor.detect_file_type(filename)
-
-            # Generate object name based on whether task_id is provided
-            if task_id:
-                object_name = f"{task_id}/{filename}"
-            else:
-                object_name = f"{user_id}/{filename}"
-
-            # Upload to MinIO
-            await storage_service.upload_file(
-                temp_path,
-                object_name,
-                content_type=file.content_type,
-            )
+            # Upload to root (no submission record created)
+            file_metadata = await upload_file_to_minio(task_id, file)
 
             # Create file record in database
             file_data = file_crud.create(
                 session=session,
-                user_id=user_id,
-                filename=filename,
-                file_type=file_type,
-                file_size=file_size,
-                object_name=object_name,
-                task_id=task_id,
+                user_id=current_user.id,
+                filename=file_metadata["file_name"],
+                file_type=document_processor.detect_file_type(
+                    file_metadata["file_name"]
+                ),
+                file_size=file_metadata["file_size"],
+                object_name=file_metadata["file_path"],
+                task_id="root",
             )
 
             return FileUploadResponse(
@@ -195,12 +167,65 @@ async def upload_file(
                 uploaded_at=file_data.uploaded_at,
             )
 
-        finally:
-            # Clean up temp file
-            try:
-                os.unlink(temp_path)
-            except Exception as e:
-                logger.warning(f"Failed to delete temp file {temp_path}: {e}")
+        # Handle submission task_id
+        try:
+            submission_id = UUID(task_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid task_id format. Must be a valid UUID or 'root'",
+            )
+
+        # Check if submission exists
+        submission = session.get(Submission, submission_id)
+        if not submission:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Submission not found: {task_id}",
+            )
+
+        # Check permission (owner or superuser)
+        if submission.owner_id != current_user.id and not current_user.is_superuser:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. You don't have permission to upload to this submission.",
+            )
+
+        # Upload file to MinIO
+        file_metadata = await upload_file_to_minio(task_id, file)
+
+        # Create SubmissionDocument record
+        doc = SubmissionDocument(
+            submission_id=submission_id,
+            file_name=file_metadata["file_name"],
+            file_path=file_metadata["file_path"],
+            file_size=file_metadata["file_size"],
+            content_type=file_metadata["content_type"],
+        )
+        session.add(doc)
+
+        # Also create File record for backward compatibility
+        file_data = file_crud.create(
+            session=session,
+            user_id=current_user.id,
+            filename=file_metadata["file_name"],
+            file_type=document_processor.detect_file_type(file_metadata["file_name"]),
+            file_size=file_metadata["file_size"],
+            object_name=file_metadata["file_path"],
+            task_id=task_id,
+        )
+
+        session.commit()
+
+        return FileUploadResponse(
+            file_id=file_data.id,
+            filename=file_data.filename,
+            file_type=file_data.file_type,
+            file_size=file_data.file_size,
+            object_name=file_data.object_name,
+            task_id=file_data.task_id,
+            uploaded_at=file_data.uploaded_at,
+        )
 
     except HTTPException:
         raise
@@ -218,7 +243,9 @@ async def upload_file(
     summary="List files",
     description="List all files uploaded by the current user.",
 )
-async def list_files(session: SessionDep) -> FileListResponse:
+async def list_files(
+    session: SessionDep, current_user: CurrentUser
+) -> FileListResponse:
     """
     List all files for the current user.
 
@@ -226,8 +253,7 @@ async def list_files(session: SessionDep) -> FileListResponse:
         FileListResponse with list of files
     """
     try:
-        user_id = get_current_user_id()
-        files = file_crud.list_by_user(session=session, user_id=user_id)
+        files = file_crud.list_by_user(session=session, user_id=current_user.id)
 
         file_infos = [
             FileInfo(
@@ -260,7 +286,9 @@ async def list_files(session: SessionDep) -> FileListResponse:
     summary="Get file details",
     description="Get details of a specific file.",
 )
-async def get_file(file_id: str, session: SessionDep) -> FileInfo:
+async def get_file(
+    file_id: str, session: SessionDep, current_user: CurrentUser
+) -> FileInfo:
     """
     Get file details.
 
@@ -279,8 +307,7 @@ async def get_file(file_id: str, session: SessionDep) -> FileInfo:
             )
 
         # Verify user owns the file
-        user_id = get_current_user_id()
-        if file_data.user_id != user_id:
+        if file_data.user_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied",
@@ -313,7 +340,9 @@ async def get_file(file_id: str, session: SessionDep) -> FileInfo:
     summary="Download file",
     description="Download a file from storage.",
 )
-async def download_file(file_id: str, session: SessionDep) -> FileResponse:
+async def download_file(
+    file_id: str, session: SessionDep, current_user: CurrentUser
+) -> FileResponse:
     """
     Download a file.
 
@@ -333,17 +362,14 @@ async def download_file(file_id: str, session: SessionDep) -> FileResponse:
             )
 
         # Verify user owns the file
-        user_id = get_current_user_id()
-        if file_data.user_id != user_id:
+        if file_data.user_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied",
             )
 
         # Download from MinIO to temp file
-        temp_path = await storage_service.download_file_to_temp(
-            file_data.object_name
-        )
+        temp_path = await storage_service.download_file_to_temp(file_data.object_name)
 
         return FileResponse(
             path=temp_path,
@@ -373,7 +399,9 @@ async def download_file(file_id: str, session: SessionDep) -> FileResponse:
     summary="Delete file",
     description="Delete a file from storage.",
 )
-async def delete_file(file_id: str, session: SessionDep) -> FileDeleteResponse:
+async def delete_file(
+    file_id: str, session: SessionDep, current_user: CurrentUser
+) -> FileDeleteResponse:
     """
     Delete a file.
 
@@ -392,8 +420,7 @@ async def delete_file(file_id: str, session: SessionDep) -> FileDeleteResponse:
             )
 
         # Verify user owns the file
-        user_id = get_current_user_id()
-        if file_data.user_id != user_id:
+        if file_data.user_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied",
@@ -429,6 +456,7 @@ async def delete_file(file_id: str, session: SessionDep) -> FileDeleteResponse:
 async def process_file(
     file_id: str,
     session: SessionDep,
+    current_user: CurrentUser,
     payload: FileProcessRequest | None = None,  # noqa: ARG001
 ) -> FileProcessResponse:
     """
@@ -451,17 +479,14 @@ async def process_file(
             )
 
         # Verify user owns the file
-        user_id = get_current_user_id()
-        if file_data.user_id != user_id:
+        if file_data.user_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied",
             )
 
         # Download file to temp
-        temp_path = await storage_service.download_file_to_temp(
-            file_data.object_name
-        )
+        temp_path = await storage_service.download_file_to_temp(file_data.object_name)
 
         # Process file
         result = await document_processor.process_file_from_path(
