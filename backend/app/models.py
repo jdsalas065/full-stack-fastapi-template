@@ -44,6 +44,9 @@ class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
+    submissions: list["Submission"] = Relationship(
+        back_populates="owner", cascade_delete=True
+    )
 
 
 # Properties to return via API, id is always required
@@ -111,3 +114,69 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=128)
+
+
+# Submission models
+class SubmissionBase(SQLModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=1000)
+
+
+class SubmissionCreate(SubmissionBase):
+    pass
+
+
+class SubmissionUpdate(SubmissionBase):
+    title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
+
+
+class Submission(SubmissionBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    owner: User | None = Relationship(back_populates="submissions")
+    documents: list["SubmissionDocument"] = Relationship(
+        back_populates="submission", cascade_delete=True
+    )
+
+
+class SubmissionPublic(SubmissionBase):
+    id: uuid.UUID
+    owner_id: uuid.UUID
+
+
+class SubmissionsPublic(SQLModel):
+    data: list[SubmissionPublic]
+    count: int
+
+
+# SubmissionDocument models
+class SubmissionDocumentBase(SQLModel):
+    filename: str = Field(max_length=255)
+    file_path: str = Field(max_length=500)
+    file_size: int
+    content_type: str = Field(max_length=100)
+
+
+class SubmissionDocumentCreate(SubmissionDocumentBase):
+    submission_id: uuid.UUID
+
+
+class SubmissionDocument(SubmissionDocumentBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    submission_id: uuid.UUID = Field(
+        foreign_key="submission.id", nullable=False, ondelete="CASCADE"
+    )
+    submission: Submission | None = Relationship(back_populates="documents")
+
+
+class SubmissionDocumentPublic(SubmissionDocumentBase):
+    id: uuid.UUID
+    submission_id: uuid.UUID
+
+
+class SubmissionDocumentsPublic(SQLModel):
+    data: list[SubmissionDocumentPublic]
+    count: int
+
