@@ -9,11 +9,11 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture
-def mock_minio_service():
-    """Mock MinIO service to avoid actual file uploads during tests."""
-    with patch("app.api.routes.submissions.minio_service") as mock:
-        # Mock upload_file_to_minio to return predictable metadata
-        mock.upload_file_to_minio = AsyncMock(
+def mock_storage_service():
+    """Mock storage service to avoid actual file uploads during tests."""
+    with patch("app.api.routes.submissions.storage_service") as mock:
+        # Mock upload_file_from_upload to return predictable metadata
+        mock.upload_file_from_upload = AsyncMock(
             return_value={
                 "file_name": "test.pdf",
                 "file_path": "task-id/test.pdf",
@@ -27,7 +27,7 @@ def mock_minio_service():
 
 
 def test_create_submission_happy_path(
-    client: TestClient, mock_minio_service: AsyncMock
+    client: TestClient, mock_storage_service: AsyncMock
 ) -> None:
     """Test successful submission creation with files."""
     # Create test files
@@ -99,7 +99,7 @@ def test_create_submission_without_name(client: TestClient) -> None:
 
 
 def test_get_submission_by_id(
-    client: TestClient, mock_minio_service: AsyncMock
+    client: TestClient, mock_storage_service: AsyncMock
 ) -> None:
     """Test getting submission by ID."""
     # First create a submission
@@ -138,7 +138,7 @@ def test_get_nonexistent_submission(client: TestClient) -> None:
 
 
 def test_get_submission_access_denied(
-    client: TestClient, mock_minio_service: AsyncMock
+    client: TestClient, mock_storage_service: AsyncMock
 ) -> None:
     """Test that non-owners cannot access submission (if multiple users exist)."""
     # This test assumes the test client uses a default user

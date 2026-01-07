@@ -3,16 +3,22 @@ MinIO storage service with temp file support.
 
 Provides async file operations from MinIO object storage,
 downloading files to temp directory for processing.
+
+This is the canonical service layer for all MinIO operations.
+All routes should use this service instead of directly accessing MinIO.
 """
 
 import asyncio
 import json
 import os
 import tempfile
+import time
 from io import BytesIO
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
+from fastapi import UploadFile
 from minio import Minio
 from minio.error import S3Error
 
@@ -23,7 +29,12 @@ logger = get_logger(__name__)
 
 
 class StorageService:
-    """MinIO storage service with temp file support."""
+    """
+    MinIO storage service with temp file support.
+
+    This is the canonical service layer for all MinIO operations.
+    All routes should use this service instead of directly accessing MinIO.
+    """
 
     def __init__(self):
         self.client = Minio(
@@ -33,6 +44,130 @@ class StorageService:
             secure=settings.MINIO_SECURE,
         )
         self.bucket = settings.MINIO_BUCKET
+
+    async def ensure_bucket_exists(self) -> None:
+        """
+        Ensure the bucket exists in MinIO.
+
+        Creates the bucket if it doesn't exist.
+
+        Raises:
+            S3Error: If MinIO operation fails
+        """
+        try:
+            bucket_exists = await asyncio.to_thread(
+                self.client.bucket_exists, self.bucket
+            )
+            if not bucket_exists:
+                await asyncio.to_thread(
+                    self.client.make_bucket, self.bucket
+                )
+                logger.info(f"Created bucket: {self.bucket}")
+        except S3Error as e:
+            logger.error(f"Error ensuring bucket exists: {e}")
+            raise
+
+    async def upload_file_from_upload(
+        self, task_id: UUID | str, file: UploadFile
+    ) -> dict[str, str | int]:
+        """
+        Upload a file from FastAPI UploadFile to MinIO storage.
+
+        Args:
+            task_id: Task/submission ID (or "root" for root uploads)
+            file: FastAPI UploadFile to upload
+
+        Returns:
+            Dictionary with file metadata:
+                - file_name: Original filename
+                - file_path: Full path in MinIO (object_name)
+                - file_size: Size in bytes
+                - content_type: MIME type
+
+        Raises:
+            S3Error: If MinIO operation fails
+        """
+        # Ensure bucket exists
+        await self.ensure_bucket_exists()
+
+        # Generate unique filename to avoid collisions
+        filename = file.filename or "unnamed"
+        # Add timestamp prefix to make filename unique
+        timestamp = int(time.time() * 1000)
+        unique_filename = f"{timestamp}_{filename}"
+
+        # Determine object path
+        if str(task_id) == "root":
+            object_name = f"root/{unique_filename}"
+        else:
+            object_name = f"{task_id}/{unique_filename}"
+
+        # Read file content
+        content = await file.read()
+        file_size = len(content)
+        # Reset file pointer in case the UploadFile is reused elsewhere
+        await file.seek(0)
+
+        # Save to temp file
+        temp_fd, temp_path = tempfile.mkstemp(suffix=Path(filename).suffix)
+        try:
+            with os.fdopen(temp_fd, "wb") as f:
+                f.write(content)
+
+            # Upload to MinIO
+            await self.upload_file(
+                temp_path,
+                object_name,
+                content_type=file.content_type,
+            )
+
+            return {
+                "file_name": filename,
+                "file_path": object_name,
+                "file_size": file_size,
+                "content_type": file.content_type or "application/octet-stream",
+            }
+
+        finally:
+            # Clean up temp file
+            try:
+                os.unlink(temp_path)
+            except Exception as e:
+                logger.warning(f"Failed to delete temp file {temp_path}: {e}")
+
+    async def delete_folder(self, task_id: UUID | str) -> None:
+        """
+        Delete all files in a task folder from MinIO.
+
+        Args:
+            task_id: Task/submission ID
+
+        Raises:
+            S3Error: If MinIO operation fails
+        """
+        prefix = f"{task_id}/"
+        try:
+            # List all objects with the prefix
+            objects = await asyncio.to_thread(
+                list,
+                self.client.list_objects(
+                    self.bucket, prefix=prefix, recursive=True
+                ),
+            )
+
+            # Delete each object
+            for obj in objects:
+                await asyncio.to_thread(
+                    self.client.remove_object,
+                    self.bucket,
+                    obj.object_name,
+                )
+                logger.info(f"Deleted {obj.object_name}")
+
+            logger.info(f"Deleted folder: {prefix}")
+        except S3Error as e:
+            logger.error(f"Error deleting folder {prefix}: {e}")
+            raise
 
     async def list_files(self, task_id: str) -> list[dict[str, Any]]:
         """
@@ -107,7 +242,7 @@ class StorageService:
     async def get_file_stream(self, object_name: str) -> BytesIO:
         """
         Get file as stream (in-memory, no disk I/O).
-        
+
         DEPRECATED: Use download_file_to_temp instead.
 
         Args:
