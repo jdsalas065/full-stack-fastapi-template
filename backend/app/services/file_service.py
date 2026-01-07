@@ -54,7 +54,7 @@ def list_user_files(session: Session, user_id: str) -> list[File]:
     return file_crud.list_by_user(session=session, user_id=user_id)
 
 
-async def get_file_details(
+def get_file_details(
     session: Session, file_id: str, user_id: str
 ) -> File | None:
     """
@@ -130,5 +130,7 @@ async def delete_file_for_user(
     return True
 
 
-# Alias for backward compatibility and semantic clarity
+# Alias for semantic clarity: processing a file requires downloading it first.
+# Both operations perform the same action (download to temp file), but the name
+# "process_file_for_user" makes the intent clearer in the processing endpoint.
 process_file_for_user = download_file_for_user

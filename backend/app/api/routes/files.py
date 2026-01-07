@@ -305,7 +305,7 @@ async def get_file(
         FileInfo with file details
     """
     try:
-        file_data = await get_file_details(
+        file_data = get_file_details(
             session=session, file_id=file_id, user_id=current_user.id
         )
         if not file_data:
