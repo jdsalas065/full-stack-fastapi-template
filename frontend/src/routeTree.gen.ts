@@ -17,6 +17,11 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RecoverPasswordRouteImport } from './routes/recover-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as LayoutRouteImport } from './routes/_layout'
+import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
+import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
+import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 
 const Table3Route = Table3RouteImport.update({
   id: '/table3',
@@ -58,6 +63,30 @@ const DemoRoute = DemoRouteImport.update({
   path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LayoutRoute = LayoutRouteImport.update({
+  id: '/_layout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LayoutIndexRoute = LayoutIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutItemsRoute = LayoutItemsRouteImport.update({
+  id: '/items',
+  path: '/items',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAdminRoute = LayoutAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => LayoutRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/demo': typeof DemoRoute
@@ -68,6 +97,10 @@ export interface FileRoutesByFullPath {
   '/table1': typeof Table1Route
   '/table2': typeof Table2Route
   '/table3': typeof Table3Route
+  '/admin': typeof LayoutAdminRoute
+  '/items': typeof LayoutItemsRoute
+  '/settings': typeof LayoutSettingsRoute
+  '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesByTo {
   '/demo': typeof DemoRoute
@@ -78,9 +111,14 @@ export interface FileRoutesByTo {
   '/table1': typeof Table1Route
   '/table2': typeof Table2Route
   '/table3': typeof Table3Route
+  '/admin': typeof LayoutAdminRoute
+  '/items': typeof LayoutItemsRoute
+  '/settings': typeof LayoutSettingsRoute
+  '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_layout': typeof LayoutRouteWithChildren
   '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
   '/recover-password': typeof RecoverPasswordRoute
@@ -89,6 +127,10 @@ export interface FileRoutesById {
   '/table1': typeof Table1Route
   '/table2': typeof Table2Route
   '/table3': typeof Table3Route
+  '/_layout/admin': typeof LayoutAdminRoute
+  '/_layout/items': typeof LayoutItemsRoute
+  '/_layout/settings': typeof LayoutSettingsRoute
+  '/_layout/': typeof LayoutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +143,10 @@ export interface FileRouteTypes {
     | '/table1'
     | '/table2'
     | '/table3'
+    | '/admin'
+    | '/items'
+    | '/settings'
+    | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/demo'
@@ -111,8 +157,13 @@ export interface FileRouteTypes {
     | '/table1'
     | '/table2'
     | '/table3'
+    | '/admin'
+    | '/items'
+    | '/settings'
+    | '/'
   id:
     | '__root__'
+    | '/_layout'
     | '/demo'
     | '/login'
     | '/recover-password'
@@ -121,9 +172,14 @@ export interface FileRouteTypes {
     | '/table1'
     | '/table2'
     | '/table3'
+    | '/_layout/admin'
+    | '/_layout/items'
+    | '/_layout/settings'
+    | '/_layout/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  LayoutRoute: typeof LayoutRouteWithChildren
   DemoRoute: typeof DemoRoute
   LoginRoute: typeof LoginRoute
   RecoverPasswordRoute: typeof RecoverPasswordRoute
@@ -192,10 +248,63 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_layout': {
+      id: '/_layout'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof LayoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_layout/': {
+      id: '/_layout/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof LayoutIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/settings': {
+      id: '/_layout/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof LayoutSettingsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/items': {
+      id: '/_layout/items'
+      path: '/items'
+      fullPath: '/items'
+      preLoaderRoute: typeof LayoutItemsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/admin': {
+      id: '/_layout/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof LayoutAdminRouteImport
+      parentRoute: typeof LayoutRoute
+    }
   }
 }
 
+interface LayoutRouteChildren {
+  LayoutAdminRoute: typeof LayoutAdminRoute
+  LayoutItemsRoute: typeof LayoutItemsRoute
+  LayoutSettingsRoute: typeof LayoutSettingsRoute
+  LayoutIndexRoute: typeof LayoutIndexRoute
+}
+
+const LayoutRouteChildren: LayoutRouteChildren = {
+  LayoutAdminRoute: LayoutAdminRoute,
+  LayoutItemsRoute: LayoutItemsRoute,
+  LayoutSettingsRoute: LayoutSettingsRoute,
+  LayoutIndexRoute: LayoutIndexRoute,
+}
+
+const LayoutRouteWithChildren =
+  LayoutRoute._addFileChildren(LayoutRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
+  LayoutRoute: LayoutRouteWithChildren,
   DemoRoute: DemoRoute,
   LoginRoute: LoginRoute,
   RecoverPasswordRoute: RecoverPasswordRoute,
