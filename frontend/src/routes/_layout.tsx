@@ -1,13 +1,11 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router"
+import { Briefcase, Home, Users } from "lucide-react"
 
 import { Footer } from "@/components/Common/Footer"
-import AppSidebar from "@/components/Sidebar/AppSidebar"
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { isLoggedIn } from "@/hooks/useAuth"
+import { HorizontalNav } from "@/components/Common/HorizontalNav"
+import { Logo } from "@/components/Common/Logo"
+import { User } from "@/components/Sidebar/User"
+import useAuth, { isLoggedIn } from "@/hooks/useAuth"
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
@@ -21,21 +19,38 @@ export const Route = createFileRoute("/_layout")({
 })
 
 function Layout() {
+  const { user: currentUser } = useAuth()
+
+  const navItems = [
+    { icon: Home, title: "Dashboard", path: "/" },
+    { icon: Briefcase, title: "Items", path: "/items" },
+  ]
+
+  // Add admin menu item if user is superuser
+  if (currentUser?.is_superuser) {
+    navItems.push({ icon: Users, title: "Admin", path: "/admin" })
+  }
+
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1 text-muted-foreground" />
-        </header>
-        <main className="flex-1 p-6 md:p-8">
-          <div className="mx-auto max-w-7xl">
-            <Outlet />
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between px-4">
+          <div className="flex items-center gap-6">
+            <Logo variant="responsive" />
           </div>
-        </main>
-        <Footer />
-      </SidebarInset>
-    </SidebarProvider>
+          <div className="flex items-center gap-2">
+            <User user={currentUser} />
+          </div>
+        </div>
+        <HorizontalNav items={navItems} />
+      </header>
+      <main className="flex-1">
+        <div className="container mx-auto py-6 px-4 md:px-8">
+          <Outlet />
+        </div>
+      </main>
+      <Footer />
+    </div>
   )
 }
 
