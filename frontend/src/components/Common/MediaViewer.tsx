@@ -53,9 +53,12 @@ export function MediaViewer({
           onClick={() => setIsOpen(true)}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
               setIsOpen(true)
             }
           }}
+          role="button"
+          tabIndex={0}
         />
       )
     }

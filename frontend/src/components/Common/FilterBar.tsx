@@ -4,6 +4,13 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -142,21 +149,23 @@ export function FilterBar({
                         {field.label}
                       </label>
                       {field.type === "select" ? (
-                        <select
-                          id={field.name}
+                        <Select
                           value={filterValues[field.name] || ""}
-                          onChange={(e) =>
-                            handleFilterChange(field.name, e.target.value)
+                          onValueChange={(value) =>
+                            handleFilterChange(field.name, value)
                           }
-                          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors"
                         >
-                          <option value="">Select...</option>
-                          {field.options?.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger id={field.name}>
+                            <SelectValue placeholder="Select..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {field.options?.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       ) : (
                         <Input
                           id={field.name}

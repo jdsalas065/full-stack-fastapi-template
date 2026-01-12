@@ -82,7 +82,7 @@ export function EnhancedDataTable<TData, TValue>({
     },
     initialState: {
       pagination: {
-        pageSize: pageSize,
+        pageSize,
       },
     },
   })
