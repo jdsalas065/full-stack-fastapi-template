@@ -1,10 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { FileText, Home, Layout } from "lucide-react"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { useState } from "react"
 import { EnhancedDataTable } from "@/components/Common/EnhancedDataTable"
 import { FilterBar } from "@/components/Common/FilterBar"
-import { HorizontalNav } from "@/components/Common/HorizontalNav"
 import { MediaViewer } from "@/components/Common/MediaViewer"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { sampleColumns } from "@/data/sampleColumns"
 import { sampleData } from "@/data/sampleData"
@@ -19,12 +18,6 @@ export const Route = createFileRoute("/demo")({
     ],
   }),
 })
-
-const navItems = [
-  { icon: Home, title: "Item 1", path: "/demo" },
-  { icon: Layout, title: "Item 2", path: "/demo" },
-  { icon: FileText, title: "Item 3", path: "/demo" },
-]
 
 function DemoPage() {
   const [searchValue, setSearchValue] = useState("")
@@ -76,14 +69,24 @@ function DemoPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* Header with Horizontal Navigation */}
+      {/* Header with Navigation Buttons */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <div className="text-2xl font-bold text-primary">Portal Demo</div>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="ghost">
+                <Link to="/table1">Table 1</Link>
+              </Button>
+              <Button asChild variant="ghost">
+                <Link to="/table2">Table 2</Link>
+              </Button>
+              <Button asChild variant="ghost">
+                <Link to="/table3">Table 3</Link>
+              </Button>
+            </div>
           </div>
         </div>
-        <HorizontalNav items={navItems} />
       </header>
 
       {/* Main Content */}
