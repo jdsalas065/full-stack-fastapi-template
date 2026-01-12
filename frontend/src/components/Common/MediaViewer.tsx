@@ -48,39 +48,46 @@ export function MediaViewer({
           alt={alt}
           className={cn(
             "h-32 w-32 cursor-pointer rounded-md border object-cover hover:opacity-80 transition-opacity",
-            thumbnailClassName
+            thumbnailClassName,
           )}
           onClick={() => setIsOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              setIsOpen(true)
+            }
+          }}
         />
       )
-    } else {
-      return (
-        <div
-          className={cn(
-            "flex h-32 w-32 cursor-pointer items-center justify-center rounded-md border bg-muted hover:bg-muted/80 transition-colors",
-            thumbnailClassName
-          )}
-          onClick={() => setIsOpen(true)}
-        >
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <svg
-              className="h-8 w-8"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-              />
-            </svg>
-            <span className="text-xs font-medium">PDF</span>
-          </div>
-        </div>
-      )
     }
+    return (
+      <button
+        type="button"
+        className={cn(
+          "flex h-32 w-32 cursor-pointer items-center justify-center rounded-md border bg-muted hover:bg-muted/80 transition-colors",
+          thumbnailClassName,
+        )}
+        onClick={() => setIsOpen(true)}
+      >
+        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+          <svg
+            className="h-8 w-8"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-label="PDF icon"
+          >
+            <title>PDF Document</title>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+            />
+          </svg>
+          <span className="text-xs font-medium">PDF</span>
+        </div>
+      </button>
+    )
   }
 
   const renderViewer = () => {
@@ -95,18 +102,20 @@ export function MediaViewer({
           />
         </div>
       )
-    } else {
-      return (
-        <div className="h-[80vh] w-full">
-          <iframe
-            src={src}
-            title={alt}
-            className="h-full w-full border-0"
-            style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top left" }}
-          />
-        </div>
-      )
     }
+    return (
+      <div className="h-[80vh] w-full">
+        <iframe
+          src={src}
+          title={alt}
+          className="h-full w-full border-0"
+          style={{
+            transform: `scale(${zoom / 100})`,
+            transformOrigin: "top left",
+          }}
+        />
+      </div>
+    )
   }
 
   return (

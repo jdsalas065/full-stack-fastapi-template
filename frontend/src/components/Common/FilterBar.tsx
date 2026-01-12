@@ -96,7 +96,9 @@ export function FilterBar({
           )}
           {showItemsPerPage && (
             <div className="flex items-center gap-2">
-              <span className="font-medium text-foreground">{itemsPerPage}</span>
+              <span className="font-medium text-foreground">
+                {itemsPerPage}
+              </span>
               <span>per page</span>
             </div>
           )}
@@ -170,10 +172,7 @@ export function FilterBar({
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    onClick={handleApplyFilters}
-                    className="flex-1"
-                  >
+                  <Button onClick={handleApplyFilters} className="flex-1">
                     Apply Filters
                   </Button>
                   <Button

@@ -64,10 +64,7 @@ export const sampleColumns: ColumnDef<SampleItem>[] = [
     cell: ({ row }) => {
       const status = row.original.status
       return (
-        <Badge
-          variant="outline"
-          className={statusVariants[status]}
-        >
+        <Badge variant="outline" className={statusVariants[status]}>
           {status.charAt(0).toUpperCase() + status.slice(1)}
         </Badge>
       )

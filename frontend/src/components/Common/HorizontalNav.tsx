@@ -22,7 +22,7 @@ export function HorizontalNav({ items, className }: HorizontalNavProps) {
     <nav
       className={cn(
         "flex items-center gap-1 border-b bg-background px-4",
-        className
+        className,
       )}
     >
       {items.map((item) => {
@@ -36,7 +36,7 @@ export function HorizontalNav({ items, className }: HorizontalNavProps) {
               "flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px",
               isActive
                 ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-border",
             )}
           >
             {item.icon && <item.icon className="h-4 w-4" />}

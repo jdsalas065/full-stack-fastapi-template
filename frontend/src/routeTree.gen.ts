@@ -13,15 +13,12 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RecoverPasswordRouteImport } from './routes/recover-password'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as LayoutRouteImport } from './routes/_layout'
-import { Route as HorizontalLayoutRouteImport } from './routes/_horizontal-layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
-import { Route as HorizontalLayoutItem3RouteImport } from './routes/_horizontal-layout/item3'
-import { Route as HorizontalLayoutItem2RouteImport } from './routes/_horizontal-layout/item2'
-import { Route as HorizontalLayoutItem1RouteImport } from './routes/_horizontal-layout/item1'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -43,12 +40,13 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LayoutRoute = LayoutRouteImport.update({
-  id: '/_layout',
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HorizontalLayoutRoute = HorizontalLayoutRouteImport.update({
-  id: '/_horizontal-layout',
+const LayoutRoute = LayoutRouteImport.update({
+  id: '/_layout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
@@ -71,43 +69,24 @@ const LayoutAdminRoute = LayoutAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => LayoutRoute,
 } as any)
-const HorizontalLayoutItem3Route = HorizontalLayoutItem3RouteImport.update({
-  id: '/item3',
-  path: '/item3',
-  getParentRoute: () => HorizontalLayoutRoute,
-} as any)
-const HorizontalLayoutItem2Route = HorizontalLayoutItem2RouteImport.update({
-  id: '/item2',
-  path: '/item2',
-  getParentRoute: () => HorizontalLayoutRoute,
-} as any)
-const HorizontalLayoutItem1Route = HorizontalLayoutItem1RouteImport.update({
-  id: '/item1',
-  path: '/item1',
-  getParentRoute: () => HorizontalLayoutRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
+  '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/item1': typeof HorizontalLayoutItem1Route
-  '/item2': typeof HorizontalLayoutItem2Route
-  '/item3': typeof HorizontalLayoutItem3Route
   '/admin': typeof LayoutAdminRoute
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
   '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesByTo {
+  '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/item1': typeof HorizontalLayoutItem1Route
-  '/item2': typeof HorizontalLayoutItem2Route
-  '/item3': typeof HorizontalLayoutItem3Route
   '/admin': typeof LayoutAdminRoute
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
@@ -115,15 +94,12 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_horizontal-layout': typeof HorizontalLayoutRouteWithChildren
   '/_layout': typeof LayoutRouteWithChildren
+  '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/_horizontal-layout/item1': typeof HorizontalLayoutItem1Route
-  '/_horizontal-layout/item2': typeof HorizontalLayoutItem2Route
-  '/_horizontal-layout/item3': typeof HorizontalLayoutItem3Route
   '/_layout/admin': typeof LayoutAdminRoute
   '/_layout/items': typeof LayoutItemsRoute
   '/_layout/settings': typeof LayoutSettingsRoute
@@ -132,41 +108,34 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/demo'
     | '/login'
     | '/recover-password'
     | '/reset-password'
     | '/signup'
-    | '/item1'
-    | '/item2'
-    | '/item3'
     | '/admin'
     | '/items'
     | '/settings'
     | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/demo'
     | '/login'
     | '/recover-password'
     | '/reset-password'
     | '/signup'
-    | '/item1'
-    | '/item2'
-    | '/item3'
     | '/admin'
     | '/items'
     | '/settings'
     | '/'
   id:
     | '__root__'
-    | '/_horizontal-layout'
     | '/_layout'
+    | '/demo'
     | '/login'
     | '/recover-password'
     | '/reset-password'
     | '/signup'
-    | '/_horizontal-layout/item1'
-    | '/_horizontal-layout/item2'
-    | '/_horizontal-layout/item3'
     | '/_layout/admin'
     | '/_layout/items'
     | '/_layout/settings'
@@ -174,8 +143,8 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  HorizontalLayoutRoute: typeof HorizontalLayoutRouteWithChildren
   LayoutRoute: typeof LayoutRouteWithChildren
+  DemoRoute: typeof DemoRoute
   LoginRoute: typeof LoginRoute
   RecoverPasswordRoute: typeof RecoverPasswordRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -212,18 +181,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_layout': {
       id: '/_layout'
       path: ''
       fullPath: ''
       preLoaderRoute: typeof LayoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_horizontal-layout': {
-      id: '/_horizontal-layout'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof HorizontalLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_layout/': {
@@ -254,44 +223,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_horizontal-layout/item3': {
-      id: '/_horizontal-layout/item3'
-      path: '/item3'
-      fullPath: '/item3'
-      preLoaderRoute: typeof HorizontalLayoutItem3RouteImport
-      parentRoute: typeof HorizontalLayoutRoute
-    }
-    '/_horizontal-layout/item2': {
-      id: '/_horizontal-layout/item2'
-      path: '/item2'
-      fullPath: '/item2'
-      preLoaderRoute: typeof HorizontalLayoutItem2RouteImport
-      parentRoute: typeof HorizontalLayoutRoute
-    }
-    '/_horizontal-layout/item1': {
-      id: '/_horizontal-layout/item1'
-      path: '/item1'
-      fullPath: '/item1'
-      preLoaderRoute: typeof HorizontalLayoutItem1RouteImport
-      parentRoute: typeof HorizontalLayoutRoute
-    }
   }
 }
-
-interface HorizontalLayoutRouteChildren {
-  HorizontalLayoutItem1Route: typeof HorizontalLayoutItem1Route
-  HorizontalLayoutItem2Route: typeof HorizontalLayoutItem2Route
-  HorizontalLayoutItem3Route: typeof HorizontalLayoutItem3Route
-}
-
-const HorizontalLayoutRouteChildren: HorizontalLayoutRouteChildren = {
-  HorizontalLayoutItem1Route: HorizontalLayoutItem1Route,
-  HorizontalLayoutItem2Route: HorizontalLayoutItem2Route,
-  HorizontalLayoutItem3Route: HorizontalLayoutItem3Route,
-}
-
-const HorizontalLayoutRouteWithChildren =
-  HorizontalLayoutRoute._addFileChildren(HorizontalLayoutRouteChildren)
 
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
@@ -311,8 +244,8 @@ const LayoutRouteWithChildren =
   LayoutRoute._addFileChildren(LayoutRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  HorizontalLayoutRoute: HorizontalLayoutRouteWithChildren,
   LayoutRoute: LayoutRouteWithChildren,
+  DemoRoute: DemoRoute,
   LoginRoute: LoginRoute,
   RecoverPasswordRoute: RecoverPasswordRoute,
   ResetPasswordRoute: ResetPasswordRoute,
