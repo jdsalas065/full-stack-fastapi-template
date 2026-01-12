@@ -57,8 +57,6 @@ export function MediaViewer({
               setIsOpen(true)
             }
           }}
-          role="button"
-          tabIndex={0}
         />
       )
     }

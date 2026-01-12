@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router"
 import { Briefcase, Home, Users } from "lucide-react"
-import { SidebarAppearance } from "@/components/Common/Appearance"
+
 import { Footer } from "@/components/Common/Footer"
 import { HorizontalNav } from "@/components/Common/HorizontalNav"
 import { Logo } from "@/components/Common/Logo"
@@ -39,7 +39,6 @@ function Layout() {
             <Logo variant="responsive" />
           </div>
           <div className="flex items-center gap-2">
-            <SidebarAppearance />
             <User user={currentUser} />
           </div>
         </div>
