@@ -130,9 +130,9 @@ function Table3Page() {
                       label: "Department",
                       type: "select",
                       options: [
-                        { label: "Engineering", value: "Engineering" },
                         { label: "Sales", value: "Sales" },
                         { label: "Marketing", value: "Marketing" },
+                        { label: "Engineering", value: "Engineering" },
                       ],
                     },
                     {
