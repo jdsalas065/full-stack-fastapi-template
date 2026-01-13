@@ -4,7 +4,7 @@ import { EnhancedDataTable } from "@/components/Common/EnhancedDataTable"
 import { FilterBar } from "@/components/Common/FilterBar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { sampleColumns } from "@/data/sampleColumns"
-import { tableData3, type TableItem3 } from "@/data/tableData3"
+import { type TableItem3, tableData3 } from "@/data/tableData3"
 
 export const Route = createFileRoute("/_layout/table3")({
   component: Table3Page,

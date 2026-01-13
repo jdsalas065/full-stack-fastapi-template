@@ -93,7 +93,10 @@ function Table2DetailPage() {
                   Status
                 </span>
                 <div className="mt-1">
-                  <Badge variant="outline" className={statusVariants[user.status]}>
+                  <Badge
+                    variant="outline"
+                    className={statusVariants[user.status]}
+                  >
                     {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                   </Badge>
                 </div>

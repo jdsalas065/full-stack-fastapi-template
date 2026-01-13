@@ -22,6 +22,9 @@ import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutDemoRouteImport } from './routes/_layout/demo'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
+import { Route as LayoutTable3IdRouteImport } from './routes/_layout/table3/$id'
+import { Route as LayoutTable2IdRouteImport } from './routes/_layout/table2/$id'
+import { Route as LayoutTable1IdRouteImport } from './routes/_layout/table1/$id'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -87,6 +90,21 @@ const LayoutAdminRoute = LayoutAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutTable3IdRoute = LayoutTable3IdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => LayoutTable3Route,
+} as any)
+const LayoutTable2IdRoute = LayoutTable2IdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => LayoutTable2Route,
+} as any)
+const LayoutTable1IdRoute = LayoutTable1IdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => LayoutTable1Route,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
@@ -97,10 +115,13 @@ export interface FileRoutesByFullPath {
   '/demo': typeof LayoutDemoRoute
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
-  '/table1': typeof LayoutTable1Route
-  '/table2': typeof LayoutTable2Route
-  '/table3': typeof LayoutTable3Route
+  '/table1': typeof LayoutTable1RouteWithChildren
+  '/table2': typeof LayoutTable2RouteWithChildren
+  '/table3': typeof LayoutTable3RouteWithChildren
   '/': typeof LayoutIndexRoute
+  '/table1/$id': typeof LayoutTable1IdRoute
+  '/table2/$id': typeof LayoutTable2IdRoute
+  '/table3/$id': typeof LayoutTable3IdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -111,10 +132,13 @@ export interface FileRoutesByTo {
   '/demo': typeof LayoutDemoRoute
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
-  '/table1': typeof LayoutTable1Route
-  '/table2': typeof LayoutTable2Route
-  '/table3': typeof LayoutTable3Route
+  '/table1': typeof LayoutTable1RouteWithChildren
+  '/table2': typeof LayoutTable2RouteWithChildren
+  '/table3': typeof LayoutTable3RouteWithChildren
   '/': typeof LayoutIndexRoute
+  '/table1/$id': typeof LayoutTable1IdRoute
+  '/table2/$id': typeof LayoutTable2IdRoute
+  '/table3/$id': typeof LayoutTable3IdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -127,10 +151,13 @@ export interface FileRoutesById {
   '/_layout/demo': typeof LayoutDemoRoute
   '/_layout/items': typeof LayoutItemsRoute
   '/_layout/settings': typeof LayoutSettingsRoute
-  '/_layout/table1': typeof LayoutTable1Route
-  '/_layout/table2': typeof LayoutTable2Route
-  '/_layout/table3': typeof LayoutTable3Route
+  '/_layout/table1': typeof LayoutTable1RouteWithChildren
+  '/_layout/table2': typeof LayoutTable2RouteWithChildren
+  '/_layout/table3': typeof LayoutTable3RouteWithChildren
   '/_layout/': typeof LayoutIndexRoute
+  '/_layout/table1/$id': typeof LayoutTable1IdRoute
+  '/_layout/table2/$id': typeof LayoutTable2IdRoute
+  '/_layout/table3/$id': typeof LayoutTable3IdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -147,6 +174,9 @@ export interface FileRouteTypes {
     | '/table2'
     | '/table3'
     | '/'
+    | '/table1/$id'
+    | '/table2/$id'
+    | '/table3/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -161,6 +191,9 @@ export interface FileRouteTypes {
     | '/table2'
     | '/table3'
     | '/'
+    | '/table1/$id'
+    | '/table2/$id'
+    | '/table3/$id'
   id:
     | '__root__'
     | '/_layout'
@@ -176,6 +209,9 @@ export interface FileRouteTypes {
     | '/_layout/table2'
     | '/_layout/table3'
     | '/_layout/'
+    | '/_layout/table1/$id'
+    | '/_layout/table2/$id'
+    | '/_layout/table3/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -279,17 +315,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/table3/$id': {
+      id: '/_layout/table3/$id'
+      path: '/$id'
+      fullPath: '/table3/$id'
+      preLoaderRoute: typeof LayoutTable3IdRouteImport
+      parentRoute: typeof LayoutTable3Route
+    }
+    '/_layout/table2/$id': {
+      id: '/_layout/table2/$id'
+      path: '/$id'
+      fullPath: '/table2/$id'
+      preLoaderRoute: typeof LayoutTable2IdRouteImport
+      parentRoute: typeof LayoutTable2Route
+    }
+    '/_layout/table1/$id': {
+      id: '/_layout/table1/$id'
+      path: '/$id'
+      fullPath: '/table1/$id'
+      preLoaderRoute: typeof LayoutTable1IdRouteImport
+      parentRoute: typeof LayoutTable1Route
+    }
   }
 }
+
+interface LayoutTable1RouteChildren {
+  LayoutTable1IdRoute: typeof LayoutTable1IdRoute
+}
+
+const LayoutTable1RouteChildren: LayoutTable1RouteChildren = {
+  LayoutTable1IdRoute: LayoutTable1IdRoute,
+}
+
+const LayoutTable1RouteWithChildren = LayoutTable1Route._addFileChildren(
+  LayoutTable1RouteChildren,
+)
+
+interface LayoutTable2RouteChildren {
+  LayoutTable2IdRoute: typeof LayoutTable2IdRoute
+}
+
+const LayoutTable2RouteChildren: LayoutTable2RouteChildren = {
+  LayoutTable2IdRoute: LayoutTable2IdRoute,
+}
+
+const LayoutTable2RouteWithChildren = LayoutTable2Route._addFileChildren(
+  LayoutTable2RouteChildren,
+)
+
+interface LayoutTable3RouteChildren {
+  LayoutTable3IdRoute: typeof LayoutTable3IdRoute
+}
+
+const LayoutTable3RouteChildren: LayoutTable3RouteChildren = {
+  LayoutTable3IdRoute: LayoutTable3IdRoute,
+}
+
+const LayoutTable3RouteWithChildren = LayoutTable3Route._addFileChildren(
+  LayoutTable3RouteChildren,
+)
 
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
   LayoutDemoRoute: typeof LayoutDemoRoute
   LayoutItemsRoute: typeof LayoutItemsRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
-  LayoutTable1Route: typeof LayoutTable1Route
-  LayoutTable2Route: typeof LayoutTable2Route
-  LayoutTable3Route: typeof LayoutTable3Route
+  LayoutTable1Route: typeof LayoutTable1RouteWithChildren
+  LayoutTable2Route: typeof LayoutTable2RouteWithChildren
+  LayoutTable3Route: typeof LayoutTable3RouteWithChildren
   LayoutIndexRoute: typeof LayoutIndexRoute
 }
 
@@ -298,9 +391,9 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutDemoRoute: LayoutDemoRoute,
   LayoutItemsRoute: LayoutItemsRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
-  LayoutTable1Route: LayoutTable1Route,
-  LayoutTable2Route: LayoutTable2Route,
-  LayoutTable3Route: LayoutTable3Route,
+  LayoutTable1Route: LayoutTable1RouteWithChildren,
+  LayoutTable2Route: LayoutTable2RouteWithChildren,
+  LayoutTable3Route: LayoutTable3RouteWithChildren,
   LayoutIndexRoute: LayoutIndexRoute,
 }
 
