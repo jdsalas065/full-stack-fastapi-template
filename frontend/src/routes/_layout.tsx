@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router"
 import { Briefcase, Home, type LucideIcon, Settings, Users } from "lucide-react"
 
 import { Footer } from "@/components/Common/Footer"
+import { UserMenu } from "@/components/Common/UserMenu"
 import { Button } from "@/components/ui/button"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
 import type { FileRoutesByTo } from "@/routeTree.gen"
@@ -65,12 +66,13 @@ function Layout() {
               })}
             </div>
           </div>
+          <UserMenu />
         </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-1">
-        <div className="container py-8 px-4 space-y-8">
+        <div className="container mx-auto py-8 px-4 space-y-8 w-full max-w-full">
           <Outlet />
         </div>
       </main>

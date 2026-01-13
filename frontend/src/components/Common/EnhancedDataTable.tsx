@@ -43,6 +43,7 @@ interface EnhancedDataTableProps<TData, TValue> {
   enablePagination?: boolean
   enableColumnVisibility?: boolean
   pageSize?: number
+  onRowClick?: (row: TData) => void
 }
 
 export function EnhancedDataTable<TData, TValue>({
@@ -53,6 +54,7 @@ export function EnhancedDataTable<TData, TValue>({
   enablePagination = true,
   enableColumnVisibility = false,
   pageSize = 10,
+  onRowClick,
 }: EnhancedDataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -115,6 +117,16 @@ export function EnhancedDataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  onClick={() => onRowClick?.(row.original)}
+                  onKeyDown={(e) => {
+                    if (onRowClick && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault()
+                      onRowClick(row.original)
+                    }
+                  }}
+                  className={onRowClick ? "cursor-pointer" : ""}
+                  tabIndex={onRowClick ? 0 : undefined}
+                  role={onRowClick ? "button" : undefined}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
