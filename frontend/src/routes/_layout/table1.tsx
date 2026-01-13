@@ -1,10 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
 import { EnhancedDataTable } from "@/components/Common/EnhancedDataTable"
 import { FilterBar } from "@/components/Common/FilterBar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { sampleColumns } from "@/data/sampleColumns"
-import { tableData1 } from "@/data/tableData1"
+import { tableData1, type TableItem1 } from "@/data/tableData1"
 
 export const Route = createFileRoute("/_layout/table1")({
   component: Table1Page,
@@ -18,8 +18,13 @@ export const Route = createFileRoute("/_layout/table1")({
 })
 
 function Table1Page() {
+  const navigate = useNavigate()
   const [searchValue, setSearchValue] = useState("")
   const [filteredData, setFilteredData] = useState(tableData1)
+
+  const handleRowClick = (row: TableItem1) => {
+    navigate({ to: "/table1/$id", params: { id: row.id } })
+  }
 
   const handleSearch = (value: string) => {
     setSearchValue(value)
@@ -134,6 +139,7 @@ function Table1Page() {
             enableSorting={true}
             enablePagination={true}
             pageSize={5}
+            onRowClick={handleRowClick}
           />
         </CardContent>
       </Card>
