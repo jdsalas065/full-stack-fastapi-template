@@ -13,12 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { SampleItem } from "@/data/sampleData"
-
-const statusVariants = {
-  active: "bg-success/10 text-success border-success/20",
-  inactive: "bg-muted text-muted-foreground border-border",
-  pending: "bg-primary/10 text-primary border-primary/20",
-}
+import { statusVariants } from "@/lib/constants"
 
 export const sampleColumns: ColumnDef<SampleItem>[] = [
   {

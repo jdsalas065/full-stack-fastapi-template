@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { tableData2 } from "@/data/tableData2"
+import { statusVariants } from "@/lib/constants"
 
 export const Route = createFileRoute("/_layout/table2/$id")({
   component: Table2DetailPage,
@@ -17,12 +18,6 @@ export const Route = createFileRoute("/_layout/table2/$id")({
     ],
   }),
 })
-
-const statusVariants = {
-  active: "bg-success/10 text-success border-success/20",
-  inactive: "bg-muted text-muted-foreground border-border",
-  pending: "bg-primary/10 text-primary border-primary/20",
-}
 
 function Table2DetailPage() {
   const { id } = Route.useParams()
