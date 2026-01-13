@@ -4,34 +4,34 @@ import { EnhancedDataTable } from "@/components/Common/EnhancedDataTable"
 import { FilterBar } from "@/components/Common/FilterBar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { sampleColumns } from "@/data/sampleColumns"
-import { type TableItem2, tableData2 } from "@/data/tableData2"
+import { type TableItem1, tableData1 } from "@/data/tableData1"
 
-export const Route = createFileRoute("/_layout/table2/")({
-  component: Table2Page,
+export const Route = createFileRoute("/_layout/table1/")({
+  component: Table1IndexPage,
   head: () => ({
     meta: [
       {
-        title: "Table 2 - Portal",
+        title: "Table 1 - Portal",
       },
     ],
   }),
 })
 
-function Table2Page() {
+function Table1IndexPage() {
   const navigate = useNavigate()
   const [searchValue, setSearchValue] = useState("")
-  const [filteredData, setFilteredData] = useState(tableData2)
+  const [filteredData, setFilteredData] = useState(tableData1)
 
-  const handleRowClick = (row: TableItem2) => {
-    navigate({ to: "/table2/$id", params: { id: row.id } })
+  const handleRowClick = (row: TableItem1) => {
+    navigate({ to: "/table1/$id", params: { id: row.id } })
   }
 
   const handleSearch = (value: string) => {
     setSearchValue(value)
     if (value.trim() === "") {
-      setFilteredData(tableData2)
+      setFilteredData(tableData1)
     } else {
-      const filtered = tableData2.filter(
+      const filtered = tableData1.filter(
         (item) =>
           item.name.toLowerCase().includes(value.toLowerCase()) ||
           item.email.toLowerCase().includes(value.toLowerCase()) ||
@@ -42,7 +42,7 @@ function Table2Page() {
   }
 
   const handleFilterApply = (filters: Record<string, any>) => {
-    let filtered = tableData2
+    let filtered = tableData1
 
     if (filters.status) {
       filtered = filtered.filter((item) => item.status === filters.status)
@@ -74,17 +74,17 @@ function Table2Page() {
     <>
       <div>
         <h1 className="text-4xl font-bold tracking-tight">
-          Table 2 - Business Team
+          Table 1 - Engineering Team
         </h1>
         <p className="text-muted-foreground mt-2 text-lg">
-          View and manage business team members
+          View and manage engineering team members
         </p>
       </div>
 
       {/* Filter Bar & Data Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Business Team Data</CardTitle>
+          <CardTitle>Engineering Team Data</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <FilterBar
@@ -112,9 +112,9 @@ function Table2Page() {
                   label: "Department",
                   type: "select",
                   options: [
-                    { label: "Marketing", value: "Marketing" },
-                    { label: "Analytics", value: "Analytics" },
-                    { label: "Human Resources", value: "Human Resources" },
+                    { label: "Engineering", value: "Engineering" },
+                    { label: "Product", value: "Product" },
+                    { label: "Design", value: "Design" },
                   ],
                 },
                 {

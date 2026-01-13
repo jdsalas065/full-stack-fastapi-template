@@ -15,19 +15,16 @@ import { Route as RecoverPasswordRouteImport } from './routes/recover-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
-import { Route as LayoutTable3RouteImport } from './routes/_layout/table3'
-import { Route as LayoutTable2RouteImport } from './routes/_layout/table2'
-import { Route as LayoutTable1RouteImport } from './routes/_layout/table1'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutDemoRouteImport } from './routes/_layout/demo'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
-import { Route as LayoutTable3IndexRouteImport } from './routes/_layout/table3/index'
-import { Route as LayoutTable2IndexRouteImport } from './routes/_layout/table2/index'
-import { Route as LayoutTable1IndexRouteImport } from './routes/_layout/table1/index'
-import { Route as LayoutTable3IdRouteImport } from './routes/_layout/table3/$id'
-import { Route as LayoutTable2IdRouteImport } from './routes/_layout/table2/$id'
-import { Route as LayoutTable1IdRouteImport } from './routes/_layout/table1/$id'
+import { Route as LayoutTable3IndexRouteImport } from './routes/_layout/table3.index'
+import { Route as LayoutTable2IndexRouteImport } from './routes/_layout/table2.index'
+import { Route as LayoutTable1IndexRouteImport } from './routes/_layout/table1.index'
+import { Route as LayoutTable3IdRouteImport } from './routes/_layout/table3.$id'
+import { Route as LayoutTable2IdRouteImport } from './routes/_layout/table2.$id'
+import { Route as LayoutTable1IdRouteImport } from './routes/_layout/table1.$id'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -58,21 +55,6 @@ const LayoutIndexRoute = LayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutTable3Route = LayoutTable3RouteImport.update({
-  id: '/table3',
-  path: '/table3',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutTable2Route = LayoutTable2RouteImport.update({
-  id: '/table2',
-  path: '/table2',
-  getParentRoute: () => LayoutRoute,
-} as any)
-const LayoutTable1Route = LayoutTable1RouteImport.update({
-  id: '/table1',
-  path: '/table1',
-  getParentRoute: () => LayoutRoute,
-} as any)
 const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -94,34 +76,34 @@ const LayoutAdminRoute = LayoutAdminRouteImport.update({
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutTable3IndexRoute = LayoutTable3IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => LayoutTable3Route,
+  id: '/table3/',
+  path: '/table3/',
+  getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutTable2IndexRoute = LayoutTable2IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => LayoutTable2Route,
+  id: '/table2/',
+  path: '/table2/',
+  getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutTable1IndexRoute = LayoutTable1IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => LayoutTable1Route,
+  id: '/table1/',
+  path: '/table1/',
+  getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutTable3IdRoute = LayoutTable3IdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => LayoutTable3Route,
+  id: '/table3/$id',
+  path: '/table3/$id',
+  getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutTable2IdRoute = LayoutTable2IdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => LayoutTable2Route,
+  id: '/table2/$id',
+  path: '/table2/$id',
+  getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutTable1IdRoute = LayoutTable1IdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => LayoutTable1Route,
+  id: '/table1/$id',
+  path: '/table1/$id',
+  getParentRoute: () => LayoutRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -133,16 +115,13 @@ export interface FileRoutesByFullPath {
   '/demo': typeof LayoutDemoRoute
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
-  '/table1': typeof LayoutTable1RouteWithChildren
-  '/table2': typeof LayoutTable2RouteWithChildren
-  '/table3': typeof LayoutTable3RouteWithChildren
   '/': typeof LayoutIndexRoute
   '/table1/$id': typeof LayoutTable1IdRoute
   '/table2/$id': typeof LayoutTable2IdRoute
   '/table3/$id': typeof LayoutTable3IdRoute
-  '/table1/': typeof LayoutTable1IndexRoute
-  '/table2/': typeof LayoutTable2IndexRoute
-  '/table3/': typeof LayoutTable3IndexRoute
+  '/table1': typeof LayoutTable1IndexRoute
+  '/table2': typeof LayoutTable2IndexRoute
+  '/table3': typeof LayoutTable3IndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -172,9 +151,6 @@ export interface FileRoutesById {
   '/_layout/demo': typeof LayoutDemoRoute
   '/_layout/items': typeof LayoutItemsRoute
   '/_layout/settings': typeof LayoutSettingsRoute
-  '/_layout/table1': typeof LayoutTable1RouteWithChildren
-  '/_layout/table2': typeof LayoutTable2RouteWithChildren
-  '/_layout/table3': typeof LayoutTable3RouteWithChildren
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/table1/$id': typeof LayoutTable1IdRoute
   '/_layout/table2/$id': typeof LayoutTable2IdRoute
@@ -194,16 +170,13 @@ export interface FileRouteTypes {
     | '/demo'
     | '/items'
     | '/settings'
-    | '/table1'
-    | '/table2'
-    | '/table3'
     | '/'
     | '/table1/$id'
     | '/table2/$id'
     | '/table3/$id'
-    | '/table1/'
-    | '/table2/'
-    | '/table3/'
+    | '/table1'
+    | '/table2'
+    | '/table3'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -232,9 +205,6 @@ export interface FileRouteTypes {
     | '/_layout/demo'
     | '/_layout/items'
     | '/_layout/settings'
-    | '/_layout/table1'
-    | '/_layout/table2'
-    | '/_layout/table3'
     | '/_layout/'
     | '/_layout/table1/$id'
     | '/_layout/table2/$id'
@@ -296,27 +266,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/table3': {
-      id: '/_layout/table3'
-      path: '/table3'
-      fullPath: '/table3'
-      preLoaderRoute: typeof LayoutTable3RouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/table2': {
-      id: '/_layout/table2'
-      path: '/table2'
-      fullPath: '/table2'
-      preLoaderRoute: typeof LayoutTable2RouteImport
-      parentRoute: typeof LayoutRoute
-    }
-    '/_layout/table1': {
-      id: '/_layout/table1'
-      path: '/table1'
-      fullPath: '/table1'
-      preLoaderRoute: typeof LayoutTable1RouteImport
-      parentRoute: typeof LayoutRoute
-    }
     '/_layout/settings': {
       id: '/_layout/settings'
       path: '/settings'
@@ -347,100 +296,61 @@ declare module '@tanstack/react-router' {
     }
     '/_layout/table3/': {
       id: '/_layout/table3/'
-      path: '/'
-      fullPath: '/table3/'
+      path: '/table3'
+      fullPath: '/table3'
       preLoaderRoute: typeof LayoutTable3IndexRouteImport
-      parentRoute: typeof LayoutTable3Route
+      parentRoute: typeof LayoutRoute
     }
     '/_layout/table2/': {
       id: '/_layout/table2/'
-      path: '/'
-      fullPath: '/table2/'
+      path: '/table2'
+      fullPath: '/table2'
       preLoaderRoute: typeof LayoutTable2IndexRouteImport
-      parentRoute: typeof LayoutTable2Route
+      parentRoute: typeof LayoutRoute
     }
     '/_layout/table1/': {
       id: '/_layout/table1/'
-      path: '/'
-      fullPath: '/table1/'
+      path: '/table1'
+      fullPath: '/table1'
       preLoaderRoute: typeof LayoutTable1IndexRouteImport
-      parentRoute: typeof LayoutTable1Route
+      parentRoute: typeof LayoutRoute
     }
     '/_layout/table3/$id': {
       id: '/_layout/table3/$id'
-      path: '/$id'
+      path: '/table3/$id'
       fullPath: '/table3/$id'
       preLoaderRoute: typeof LayoutTable3IdRouteImport
-      parentRoute: typeof LayoutTable3Route
+      parentRoute: typeof LayoutRoute
     }
     '/_layout/table2/$id': {
       id: '/_layout/table2/$id'
-      path: '/$id'
+      path: '/table2/$id'
       fullPath: '/table2/$id'
       preLoaderRoute: typeof LayoutTable2IdRouteImport
-      parentRoute: typeof LayoutTable2Route
+      parentRoute: typeof LayoutRoute
     }
     '/_layout/table1/$id': {
       id: '/_layout/table1/$id'
-      path: '/$id'
+      path: '/table1/$id'
       fullPath: '/table1/$id'
       preLoaderRoute: typeof LayoutTable1IdRouteImport
-      parentRoute: typeof LayoutTable1Route
+      parentRoute: typeof LayoutRoute
     }
   }
 }
-
-interface LayoutTable1RouteChildren {
-  LayoutTable1IdRoute: typeof LayoutTable1IdRoute
-  LayoutTable1IndexRoute: typeof LayoutTable1IndexRoute
-}
-
-const LayoutTable1RouteChildren: LayoutTable1RouteChildren = {
-  LayoutTable1IdRoute: LayoutTable1IdRoute,
-  LayoutTable1IndexRoute: LayoutTable1IndexRoute,
-}
-
-const LayoutTable1RouteWithChildren = LayoutTable1Route._addFileChildren(
-  LayoutTable1RouteChildren,
-)
-
-interface LayoutTable2RouteChildren {
-  LayoutTable2IdRoute: typeof LayoutTable2IdRoute
-  LayoutTable2IndexRoute: typeof LayoutTable2IndexRoute
-}
-
-const LayoutTable2RouteChildren: LayoutTable2RouteChildren = {
-  LayoutTable2IdRoute: LayoutTable2IdRoute,
-  LayoutTable2IndexRoute: LayoutTable2IndexRoute,
-}
-
-const LayoutTable2RouteWithChildren = LayoutTable2Route._addFileChildren(
-  LayoutTable2RouteChildren,
-)
-
-interface LayoutTable3RouteChildren {
-  LayoutTable3IdRoute: typeof LayoutTable3IdRoute
-  LayoutTable3IndexRoute: typeof LayoutTable3IndexRoute
-}
-
-const LayoutTable3RouteChildren: LayoutTable3RouteChildren = {
-  LayoutTable3IdRoute: LayoutTable3IdRoute,
-  LayoutTable3IndexRoute: LayoutTable3IndexRoute,
-}
-
-const LayoutTable3RouteWithChildren = LayoutTable3Route._addFileChildren(
-  LayoutTable3RouteChildren,
-)
 
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
   LayoutDemoRoute: typeof LayoutDemoRoute
   LayoutItemsRoute: typeof LayoutItemsRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
-  LayoutTable1Route: typeof LayoutTable1RouteWithChildren
-  LayoutTable2Route: typeof LayoutTable2RouteWithChildren
-  LayoutTable3Route: typeof LayoutTable3RouteWithChildren
   LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutTable1IdRoute: typeof LayoutTable1IdRoute
+  LayoutTable2IdRoute: typeof LayoutTable2IdRoute
+  LayoutTable3IdRoute: typeof LayoutTable3IdRoute
+  LayoutTable1IndexRoute: typeof LayoutTable1IndexRoute
+  LayoutTable2IndexRoute: typeof LayoutTable2IndexRoute
+  LayoutTable3IndexRoute: typeof LayoutTable3IndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -448,10 +358,13 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutDemoRoute: LayoutDemoRoute,
   LayoutItemsRoute: LayoutItemsRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
-  LayoutTable1Route: LayoutTable1RouteWithChildren,
-  LayoutTable2Route: LayoutTable2RouteWithChildren,
-  LayoutTable3Route: LayoutTable3RouteWithChildren,
   LayoutIndexRoute: LayoutIndexRoute,
+  LayoutTable1IdRoute: LayoutTable1IdRoute,
+  LayoutTable2IdRoute: LayoutTable2IdRoute,
+  LayoutTable3IdRoute: LayoutTable3IdRoute,
+  LayoutTable1IndexRoute: LayoutTable1IndexRoute,
+  LayoutTable2IndexRoute: LayoutTable2IndexRoute,
+  LayoutTable3IndexRoute: LayoutTable3IndexRoute,
 }
 
 const LayoutRouteWithChildren =

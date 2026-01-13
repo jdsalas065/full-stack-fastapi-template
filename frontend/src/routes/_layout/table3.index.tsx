@@ -7,7 +7,7 @@ import { sampleColumns } from "@/data/sampleColumns"
 import { type TableItem3, tableData3 } from "@/data/tableData3"
 
 export const Route = createFileRoute("/_layout/table3/")({
-  component: Table3Page,
+  component: Table3IndexPage,
   head: () => ({
     meta: [
       {
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_layout/table3/")({
   }),
 })
 
-function Table3Page() {
+function Table3IndexPage() {
   const navigate = useNavigate()
   const [searchValue, setSearchValue] = useState("")
   const [filteredData, setFilteredData] = useState(tableData3)
