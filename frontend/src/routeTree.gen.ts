@@ -19,12 +19,12 @@ import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutDemoRouteImport } from './routes/_layout/demo'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
-import { Route as LayoutTable3IndexRouteImport } from './routes/_layout/table3.index'
-import { Route as LayoutTable2IndexRouteImport } from './routes/_layout/table2.index'
-import { Route as LayoutTable1IndexRouteImport } from './routes/_layout/table1.index'
-import { Route as LayoutTable3IdRouteImport } from './routes/_layout/table3.$id'
-import { Route as LayoutTable2IdRouteImport } from './routes/_layout/table2.$id'
-import { Route as LayoutTable1IdRouteImport } from './routes/_layout/table1.$id'
+import { Route as LayoutTable3IndexRouteImport } from './routes/_layout/table3/index'
+import { Route as LayoutTable2IndexRouteImport } from './routes/_layout/table2/index'
+import { Route as LayoutTable1IndexRouteImport } from './routes/_layout/table1/index'
+import { Route as LayoutTable3IdRouteImport } from './routes/_layout/table3/$id'
+import { Route as LayoutTable2IdRouteImport } from './routes/_layout/table2/$id'
+import { Route as LayoutTable1IdRouteImport } from './routes/_layout/table1/$id'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
