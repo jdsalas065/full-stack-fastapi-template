@@ -1,15 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { FileText, Home, Layout } from "lucide-react"
 import { useState } from "react"
 import { EnhancedDataTable } from "@/components/Common/EnhancedDataTable"
 import { FilterBar } from "@/components/Common/FilterBar"
-import { HorizontalNav } from "@/components/Common/HorizontalNav"
 import { MediaViewer } from "@/components/Common/MediaViewer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { sampleColumns } from "@/data/sampleColumns"
 import { sampleData } from "@/data/sampleData"
 
-export const Route = createFileRoute("/demo")({
+export const Route = createFileRoute("/_layout/demo")({
   component: DemoPage,
   head: () => ({
     meta: [
@@ -19,12 +17,6 @@ export const Route = createFileRoute("/demo")({
     ],
   }),
 })
-
-const navItems = [
-  { icon: Home, title: "Item 1", path: "/demo" },
-  { icon: Layout, title: "Item 2", path: "/demo" },
-  { icon: FileText, title: "Item 3", path: "/demo" },
-]
 
 function DemoPage() {
   const [searchValue, setSearchValue] = useState("")
@@ -75,30 +67,16 @@ function DemoPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      {/* Header with Horizontal Navigation */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <div className="text-2xl font-bold text-primary">Portal Demo</div>
-          </div>
-        </div>
-        <HorizontalNav items={navItems} />
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1">
-        <div className="container py-8 px-4 space-y-8">
-          {/* Page Header */}
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight">
-              Frontend Component Demo
-            </h1>
-            <p className="text-muted-foreground mt-2 text-lg">
-              Showcasing the new horizontal navigation, enhanced data table,
-              filter bar, and media viewer components
-            </p>
-          </div>
+    <>
+      <div>
+        <h1 className="text-4xl font-bold tracking-tight">
+          Frontend Component Demo
+        </h1>
+        <p className="text-muted-foreground mt-2 text-lg">
+          Showcasing the new horizontal navigation, enhanced data table,
+          filter bar, and media viewer components
+        </p>
+      </div>
 
           {/* Color Palette Demo */}
           <Card>
@@ -298,15 +276,6 @@ function DemoPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t py-6">
-        <div className="container px-4 text-center text-sm text-muted-foreground">
-          <p>Portal Frontend Base - 2026</p>
-        </div>
-      </footer>
-    </div>
+    </>
   )
 }
