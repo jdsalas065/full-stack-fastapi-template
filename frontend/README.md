@@ -1,8 +1,38 @@
-# FastAPI Project - Frontend
+# FastAPI Project - Frontend (Standalone)
 
 The frontend is built with [Vite](https://vitejs.dev/), [React](https://reactjs.org/), [TypeScript](https://www.typescriptlang.org/), [TanStack Query](https://tanstack.com/query), [TanStack Router](https://tanstack.com/router) and [Tailwind CSS](https://tailwindcss.com/).
 
-## Frontend development
+This frontend can run completely independently - it only needs a backend API URL to connect to.
+
+## Quick Start
+
+### 1. Setup Environment Variables
+
+Create a `.env` file in the `frontend/` directory:
+
+```bash
+# API Configuration
+VITE_API_URL=http://localhost:8000
+
+# Node Environment
+NODE_ENV=development
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Start Development Server
+
+```bash
+npm run dev
+```
+
+The frontend will be available at http://localhost:5173/
+
+## Frontend Development
 
 Before you begin, ensure that you have either the Node Version Manager (nvm) or Fast Node Manager (fnm) installed on your system.
 
@@ -13,6 +43,7 @@ Before you begin, ensure that you have either the Node Version Manager (nvm) or 
 ```bash
 cd frontend
 ```
+
 * If the Node.js version specified in the `.nvmrc` file isn't installed on your system, you can install it using the appropriate command:
 
 ```bash
@@ -51,73 +82,202 @@ Notice that this live server is not running inside Docker, it's for local develo
 
 Check the file `package.json` to see other available options.
 
-### Removing the frontend
+## Generate OpenAPI Client
 
-If you are developing an API-only app and want to remove the frontend, you can do it easily:
+The frontend uses a generated TypeScript client based on the backend's OpenAPI schema. You need to regenerate this client whenever the backend API changes.
 
-* Remove the `./frontend` directory.
+### Method 1: Using the Script (Recommended)
 
-* In the `docker-compose.yml` file, remove the whole service / section `frontend`.
-
-* In the `docker-compose.override.yml` file, remove the whole service / section `frontend`.
-
-Done, you have a frontend-less (api-only) app. 🤓
-
----
-
-If you want, you can also remove the `FRONTEND` environment variables from:
-
-* `.env`
-* `./scripts/*.sh`
-
-But it would be only to clean them up, leaving them won't really have any effect either way.
-
-## Generate Client
-
-### Automatically
-
-* Activate the backend virtual environment.
-* From the top level project directory, run the script:
+The frontend includes a standalone script that can fetch the OpenAPI schema from a running backend:
 
 ```bash
-./scripts/generate-client.sh
+# Make sure the backend is running at the URL specified in VITE_API_URL
+bash scripts/generate-client.sh
 ```
 
-* Commit the changes.
-
-### Manually
-
-* Start the Docker Compose stack.
-
-* Download the OpenAPI JSON file from `http://localhost/api/v1/openapi.json` and copy it to a new file `openapi.json` at the root of the `frontend` directory.
-
-* To generate the frontend client, run:
+Or if you have `VITE_API_URL` set differently:
 
 ```bash
+VITE_API_URL=http://localhost:8000 bash scripts/generate-client.sh
+```
+
+### Method 2: Manual Generation
+
+1. **Option A: From a running backend**
+   - Ensure your backend is running
+   - Download the OpenAPI JSON from `http://localhost:8000/api/v1/openapi.json`
+   - Save it as `openapi.json` in the `frontend/` directory
+   - Run: `npm run generate-client`
+
+2. **Option B: From an existing openapi.json file**
+   - Place `openapi.json` in the `frontend/` directory
+   - Run: `npm run generate-client`
+
+### Method 3: Using Python (if backend is local)
+
+If you have the backend code locally and Python installed:
+
+```bash
+# From the backend directory
+cd ../backend
+python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > ../frontend/openapi.json
+
+# From the frontend directory
+cd ../frontend
 npm run generate-client
 ```
 
-* Commit the changes.
-
-Notice that everytime the backend changes (changing the OpenAPI schema), you should follow these steps again to update the frontend client.
+**Note:** Every time the backend API changes (changing the OpenAPI schema), you should regenerate the client using one of the methods above.
 
 ## Using a Remote API
 
-If you want to use a remote API, you can set the environment variable `VITE_API_URL` to the URL of the remote API. For example, you can set it in the `frontend/.env` file:
+If you want to use a remote API instead of localhost, set the `VITE_API_URL` environment variable:
+
+### Option 1: Environment File
+
+Create or update `frontend/.env`:
 
 ```env
 VITE_API_URL=https://api.my-domain.example.com
 ```
 
+### Option 2: Environment Variable
+
+```bash
+# Linux/Mac
+export VITE_API_URL=https://api.my-domain.example.com
+npm run dev
+
+# Windows PowerShell
+$env:VITE_API_URL="https://api.my-domain.example.com"
+npm run dev
+
+# Windows CMD
+set VITE_API_URL=https://api.my-domain.example.com
+npm run dev
+```
+
 Then, when you run the frontend, it will use that URL as the base URL for the API.
+
+## Building for Production
+
+### Build the Frontend
+
+```bash
+npm run build
+```
+
+This will create a `dist/` directory with the production-ready files.
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+### Docker Build
+
+The frontend includes a `Dockerfile` for containerized deployment:
+
+```bash
+docker build -t frontend:latest .
+```
+
+Or with build arguments:
+
+```bash
+docker build \
+  --build-arg VITE_API_URL=https://api.example.com \
+  --build-arg NODE_ENV=production \
+  -t frontend:latest .
+```
+
+## Standalone Operation
+
+This frontend is designed to run completely independently:
+
+- ✅ All configuration in `frontend/.env`
+- ✅ No dependencies on parent directory
+- ✅ Can connect to any backend API via `VITE_API_URL`
+- ✅ Can be deployed separately from backend
+- ✅ All scripts are self-contained
+
+The frontend only needs:
+- A backend API URL (configured via `VITE_API_URL`)
+- Node.js and npm installed
+- No backend code or files required
 
 ## Code Structure
 
 The frontend code is structured as follows:
 
-* `frontend/src` - The main frontend code.
-* `frontend/src/assets` - Static assets.
-* `frontend/src/client` - The generated OpenAPI client.
-* `frontend/src/components` -  The different components of the frontend.
-* `frontend/src/hooks` - Custom hooks.
-* `frontend/src/routes` - The different routes of the frontend which include the pages.
+```
+frontend/
+├── src/
+│   ├── client/              # Generated OpenAPI client (auto-generated)
+│   ├── components/          # React components
+│   │   ├── Admin/          # Admin components
+│   │   ├── Common/         # Common/shared components
+│   │   ├── Items/          # Item-related components
+│   │   ├── Pending/        # Pending items/users components
+│   │   ├── Sidebar/        # Sidebar components
+│   │   ├── ui/             # UI primitives (shadcn/ui)
+│   │   └── UserSettings/   # User settings components
+│   ├── hooks/              # Custom React hooks
+│   ├── routes/             # TanStack Router routes
+│   ├── lib/                # Utility libraries
+│   └── data/               # Sample/static data
+├── public/                 # Static assets
+├── scripts/                # Utility scripts
+│   └── generate-client.sh # OpenAPI client generator
+├── .env                    # Environment variables (create from .env.example)
+├── package.json            # Dependencies and scripts
+├── vite.config.ts          # Vite configuration
+├── tsconfig.json           # TypeScript configuration
+└── Dockerfile              # Docker configuration
+```
+
+## Available Scripts
+
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Lint code with Biome
+- `npm run generate-client` - Generate TypeScript client from OpenAPI schema
+
+## Troubleshooting
+
+### Cannot connect to backend API
+
+- Verify the backend is running
+- Check `VITE_API_URL` in `.env` matches your backend URL
+- Ensure CORS is properly configured on the backend
+- Check browser console for CORS errors
+
+### Client generation fails
+
+- Ensure backend is running and accessible
+- Check `VITE_API_URL` is correct
+- Verify `openapi.json` exists if using manual method
+- Check network connectivity to backend
+
+### Port already in use
+
+- Change the port in `vite.config.ts` or use:
+  ```bash
+  npm run dev -- --port 3000
+  ```
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_API_URL` | Backend API URL | `http://localhost:8000` |
+| `NODE_ENV` | Node environment | `development` |
+
+## Development Tips
+
+1. **Hot Reload**: The dev server automatically reloads on file changes
+2. **Type Safety**: The generated OpenAPI client provides full TypeScript types
+3. **API Changes**: Always regenerate the client after backend API changes
+4. **Remote Backend**: You can develop frontend against a remote/staging backend by setting `VITE_API_URL`

@@ -26,8 +26,8 @@ def parse_cors(v: Any) -> list[str] | str:
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        # Use top level .env file (one level above ./backend/)
-        env_file="../.env",
+        # Use .env file in the backend directory
+        env_file=".env",
         env_ignore_empty=True,
         extra="ignore",
     )
@@ -81,6 +81,12 @@ class Settings(BaseSettings):
     # OpenAI Settings (for LLM OCR)
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o"  # or "gpt-4-vision-preview"
+    OPENAI_TIMEOUT: float = 30.0  # Timeout in seconds for OpenAI API calls
+
+    # Rate Limiting
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_PER_MINUTE: int = 60
+    RATE_LIMIT_PER_HOUR: int = 1000
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":

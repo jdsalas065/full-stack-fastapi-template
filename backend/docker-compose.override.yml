@@ -1,0 +1,33 @@
+services:
+  db:
+    restart: "no"
+
+  adminer:
+    restart: "no"
+
+  minio:
+    restart: "no"
+
+  backend:
+    restart: "no"
+    build:
+      context: .
+    command:
+      - fastapi
+      - run
+      - --reload
+      - "app/main.py"
+    develop:
+      watch:
+        - path: .
+          action: sync
+          target: /app
+          ignore:
+            - .venv
+            - __pycache__
+            - .pytest_cache
+            - htmlcov
+        - path: pyproject.toml
+          action: rebuild
+    volumes:
+      - ./htmlcov:/app/htmlcov

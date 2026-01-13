@@ -11,10 +11,12 @@ from app.core.constants import Environment
 from app.core.logging import get_logger, setup_logging
 from app.exceptions import (
     AppException,
+    RateLimitException,
     app_exception_handler,
     generic_exception_handler,
 )
 from app.middleware import RequestLoggingMiddleware
+from app.middleware.rate_limit import RateLimitMiddleware
 
 # Setup logging
 setup_logging()
@@ -86,11 +88,21 @@ app = FastAPI(
 
 # Register exception handlers
 app.add_exception_handler(AppException, app_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(RateLimitException, app_exception_handler)  # type: ignore[arg-type]
 app.add_exception_handler(Exception, generic_exception_handler)
 
 # Add middleware
 if settings.ENVIRONMENT == Environment.LOCAL:
     app.add_middleware(RequestLoggingMiddleware)
+
+# Add rate limiting (enabled by default, can be disabled via config)
+if settings.RATE_LIMIT_ENABLED:
+    app.add_middleware(
+        RateLimitMiddleware,
+        requests_per_minute=settings.RATE_LIMIT_PER_MINUTE,
+        requests_per_hour=settings.RATE_LIMIT_PER_HOUR,
+        enabled=True,
+    )
 
 # Set all CORS enabled origins
 if settings.all_cors_origins:
