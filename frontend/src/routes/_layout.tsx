@@ -1,9 +1,27 @@
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router"
-import { Briefcase, Home, Settings, Users } from "lucide-react"
+import { Briefcase, Home, type LucideIcon, Settings, Users } from "lucide-react"
 
 import { Footer } from "@/components/Common/Footer"
 import { Button } from "@/components/ui/button"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
+
+interface NavItem {
+  to: string
+  label: string
+  icon?: LucideIcon
+  requiresSuperuser?: boolean
+}
+
+const navigationItems: NavItem[] = [
+  { to: "/demo", label: "Demo" },
+  { to: "/table1", label: "Table 1" },
+  { to: "/table2", label: "Table 2" },
+  { to: "/table3", label: "Table 3" },
+  { to: "/", label: "Dashboard", icon: Home },
+  { to: "/items", label: "Items", icon: Briefcase },
+  { to: "/admin", label: "Admin", icon: Users, requiresSuperuser: true },
+  { to: "/settings", label: "Settings", icon: Settings },
+]
 
 export const Route = createFileRoute("/_layout")({
   component: Layout,
@@ -27,44 +45,23 @@ function Layout() {
           <div className="flex items-center gap-4">
             <div className="text-2xl font-bold text-primary">Portal Demo</div>
             <div className="flex items-center gap-2">
-              <Button asChild variant="ghost">
-                <Link to="/demo">Demo</Link>
-              </Button>
-              <Button asChild variant="ghost">
-                <Link to="/table1">Table 1</Link>
-              </Button>
-              <Button asChild variant="ghost">
-                <Link to="/table2">Table 2</Link>
-              </Button>
-              <Button asChild variant="ghost">
-                <Link to="/table3">Table 3</Link>
-              </Button>
-              <Button asChild variant="ghost">
-                <Link to="/">
-                  <Home className="h-4 w-4 mr-2" />
-                  Dashboard
-                </Link>
-              </Button>
-              <Button asChild variant="ghost">
-                <Link to="/items">
-                  <Briefcase className="h-4 w-4 mr-2" />
-                  Items
-                </Link>
-              </Button>
-              {currentUser?.is_superuser && (
-                <Button asChild variant="ghost">
-                  <Link to="/admin">
-                    <Users className="h-4 w-4 mr-2" />
-                    Admin
-                  </Link>
-                </Button>
-              )}
-              <Button asChild variant="ghost">
-                <Link to="/settings">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
-                </Link>
-              </Button>
+              {navigationItems.map((item) => {
+                // Skip admin link if user is not superuser
+                if (item.requiresSuperuser && !currentUser?.is_superuser) {
+                  return null
+                }
+
+                const Icon = item.icon
+
+                return (
+                  <Button key={item.to} asChild variant="ghost">
+                    <Link to={item.to}>
+                      {Icon && <Icon className="h-4 w-4 mr-2" />}
+                      {item.label}
+                    </Link>
+                  </Button>
+                )
+              })}
             </div>
           </div>
         </div>
