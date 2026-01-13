@@ -65,7 +65,7 @@ export function SharedLayout({ children }: SharedLayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1">
-        <div className="container py-8 px-4">
+        <div className="container py-8 px-4 space-y-8">
           {children}
         </div>
       </main>
