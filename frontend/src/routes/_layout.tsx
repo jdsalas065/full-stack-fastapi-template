@@ -4,9 +4,10 @@ import { Briefcase, Home, type LucideIcon, Settings, Users } from "lucide-react"
 import { Footer } from "@/components/Common/Footer"
 import { Button } from "@/components/ui/button"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
+import type { FileRoutesByTo } from "@/routeTree.gen"
 
 interface NavItem {
-  to: string
+  to: keyof FileRoutesByTo
   label: string
   icon?: LucideIcon
   requiresSuperuser?: boolean
