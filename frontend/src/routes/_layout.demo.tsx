@@ -3,12 +3,11 @@ import { useState } from "react"
 import { EnhancedDataTable } from "@/components/Common/EnhancedDataTable"
 import { FilterBar } from "@/components/Common/FilterBar"
 import { MediaViewer } from "@/components/Common/MediaViewer"
-import { SharedLayout } from "@/components/Common/SharedLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { sampleColumns } from "@/data/sampleColumns"
 import { sampleData } from "@/data/sampleData"
 
-export const Route = createFileRoute("/demo")({
+export const Route = createFileRoute("/_layout/demo")({
   component: DemoPage,
   head: () => ({
     meta: [
@@ -68,7 +67,7 @@ function DemoPage() {
   }
 
   return (
-    <SharedLayout>
+    <>
       <div>
         <h1 className="text-4xl font-bold tracking-tight">
           Frontend Component Demo
@@ -277,6 +276,6 @@ function DemoPage() {
               </div>
             </CardContent>
           </Card>
-    </SharedLayout>
+    </>
   )
 }

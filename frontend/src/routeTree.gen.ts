@@ -9,35 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as Table3RouteImport } from './routes/table3'
-import { Route as Table2RouteImport } from './routes/table2'
-import { Route as Table1RouteImport } from './routes/table1'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RecoverPasswordRouteImport } from './routes/recover-password'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as DemoRouteImport } from './routes/demo'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as LayoutTable3RouteImport } from './routes/_layout.table3'
+import { Route as LayoutTable2RouteImport } from './routes/_layout.table2'
+import { Route as LayoutTable1RouteImport } from './routes/_layout.table1'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
+import { Route as LayoutDemoRouteImport } from './routes/_layout.demo'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 
-const Table3Route = Table3RouteImport.update({
-  id: '/table3',
-  path: '/table3',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const Table2Route = Table2RouteImport.update({
-  id: '/table2',
-  path: '/table2',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const Table1Route = Table1RouteImport.update({
-  id: '/table1',
-  path: '/table1',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -58,11 +43,6 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoRoute = DemoRouteImport.update({
-  id: '/demo',
-  path: '/demo',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
   getParentRoute: () => rootRouteImport,
@@ -70,6 +50,21 @@ const LayoutRoute = LayoutRouteImport.update({
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutTable3Route = LayoutTable3RouteImport.update({
+  id: '/table3',
+  path: '/table3',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutTable2Route = LayoutTable2RouteImport.update({
+  id: '/table2',
+  path: '/table2',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutTable1Route = LayoutTable1RouteImport.update({
+  id: '/table1',
+  path: '/table1',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
@@ -82,6 +77,11 @@ const LayoutItemsRoute = LayoutItemsRouteImport.update({
   path: '/items',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutDemoRoute = LayoutDemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => LayoutRoute,
+} as any)
 const LayoutAdminRoute = LayoutAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -89,130 +89,105 @@ const LayoutAdminRoute = LayoutAdminRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/table1': typeof Table1Route
-  '/table2': typeof Table2Route
-  '/table3': typeof Table3Route
   '/admin': typeof LayoutAdminRoute
+  '/demo': typeof LayoutDemoRoute
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
+  '/table1': typeof LayoutTable1Route
+  '/table2': typeof LayoutTable2Route
+  '/table3': typeof LayoutTable3Route
   '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesByTo {
-  '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/table1': typeof Table1Route
-  '/table2': typeof Table2Route
-  '/table3': typeof Table3Route
   '/admin': typeof LayoutAdminRoute
+  '/demo': typeof LayoutDemoRoute
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
+  '/table1': typeof LayoutTable1Route
+  '/table2': typeof LayoutTable2Route
+  '/table3': typeof LayoutTable3Route
   '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
-  '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/table1': typeof Table1Route
-  '/table2': typeof Table2Route
-  '/table3': typeof Table3Route
   '/_layout/admin': typeof LayoutAdminRoute
+  '/_layout/demo': typeof LayoutDemoRoute
   '/_layout/items': typeof LayoutItemsRoute
   '/_layout/settings': typeof LayoutSettingsRoute
+  '/_layout/table1': typeof LayoutTable1Route
+  '/_layout/table2': typeof LayoutTable2Route
+  '/_layout/table3': typeof LayoutTable3Route
   '/_layout/': typeof LayoutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/demo'
     | '/login'
     | '/recover-password'
     | '/reset-password'
     | '/signup'
+    | '/admin'
+    | '/demo'
+    | '/items'
+    | '/settings'
     | '/table1'
     | '/table2'
     | '/table3'
-    | '/admin'
-    | '/items'
-    | '/settings'
     | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/demo'
     | '/login'
     | '/recover-password'
     | '/reset-password'
     | '/signup'
+    | '/admin'
+    | '/demo'
+    | '/items'
+    | '/settings'
     | '/table1'
     | '/table2'
     | '/table3'
-    | '/admin'
-    | '/items'
-    | '/settings'
     | '/'
   id:
     | '__root__'
     | '/_layout'
-    | '/demo'
     | '/login'
     | '/recover-password'
     | '/reset-password'
     | '/signup'
-    | '/table1'
-    | '/table2'
-    | '/table3'
     | '/_layout/admin'
+    | '/_layout/demo'
     | '/_layout/items'
     | '/_layout/settings'
+    | '/_layout/table1'
+    | '/_layout/table2'
+    | '/_layout/table3'
     | '/_layout/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
-  DemoRoute: typeof DemoRoute
   LoginRoute: typeof LoginRoute
   RecoverPasswordRoute: typeof RecoverPasswordRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
-  Table1Route: typeof Table1Route
-  Table2Route: typeof Table2Route
-  Table3Route: typeof Table3Route
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/table3': {
-      id: '/table3'
-      path: '/table3'
-      fullPath: '/table3'
-      preLoaderRoute: typeof Table3RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/table2': {
-      id: '/table2'
-      path: '/table2'
-      fullPath: '/table2'
-      preLoaderRoute: typeof Table2RouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/table1': {
-      id: '/table1'
-      path: '/table1'
-      fullPath: '/table1'
-      preLoaderRoute: typeof Table1RouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -241,13 +216,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo': {
-      id: '/demo'
-      path: '/demo'
-      fullPath: '/demo'
-      preLoaderRoute: typeof DemoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_layout': {
       id: '/_layout'
       path: ''
@@ -260,6 +228,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof LayoutIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/table3': {
+      id: '/_layout/table3'
+      path: '/table3'
+      fullPath: '/table3'
+      preLoaderRoute: typeof LayoutTable3RouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/table2': {
+      id: '/_layout/table2'
+      path: '/table2'
+      fullPath: '/table2'
+      preLoaderRoute: typeof LayoutTable2RouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/table1': {
+      id: '/_layout/table1'
+      path: '/table1'
+      fullPath: '/table1'
+      preLoaderRoute: typeof LayoutTable1RouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/settings': {
@@ -276,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutItemsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/demo': {
+      id: '/_layout/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof LayoutDemoRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/admin': {
       id: '/_layout/admin'
       path: '/admin'
@@ -288,15 +284,23 @@ declare module '@tanstack/react-router' {
 
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
+  LayoutDemoRoute: typeof LayoutDemoRoute
   LayoutItemsRoute: typeof LayoutItemsRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
+  LayoutTable1Route: typeof LayoutTable1Route
+  LayoutTable2Route: typeof LayoutTable2Route
+  LayoutTable3Route: typeof LayoutTable3Route
   LayoutIndexRoute: typeof LayoutIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRoute,
+  LayoutDemoRoute: LayoutDemoRoute,
   LayoutItemsRoute: LayoutItemsRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
+  LayoutTable1Route: LayoutTable1Route,
+  LayoutTable2Route: LayoutTable2Route,
+  LayoutTable3Route: LayoutTable3Route,
   LayoutIndexRoute: LayoutIndexRoute,
 }
 
@@ -305,14 +309,10 @@ const LayoutRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
-  DemoRoute: DemoRoute,
   LoginRoute: LoginRoute,
   RecoverPasswordRoute: RecoverPasswordRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
-  Table1Route: Table1Route,
-  Table2Route: Table2Route,
-  Table3Route: Table3Route,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

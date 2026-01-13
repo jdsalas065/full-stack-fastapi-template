@@ -2,32 +2,31 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useState } from "react"
 import { EnhancedDataTable } from "@/components/Common/EnhancedDataTable"
 import { FilterBar } from "@/components/Common/FilterBar"
-import { SharedLayout } from "@/components/Common/SharedLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { sampleColumns } from "@/data/sampleColumns"
-import { tableData3 } from "@/data/tableData3"
+import { tableData2 } from "@/data/tableData2"
 
-export const Route = createFileRoute("/table3")({
-  component: Table3Page,
+export const Route = createFileRoute("/_layout/table2")({
+  component: Table2Page,
   head: () => ({
     meta: [
       {
-        title: "Table 3 - Portal",
+        title: "Table 2 - Portal",
       },
     ],
   }),
 })
 
-function Table3Page() {
+function Table2Page() {
   const [searchValue, setSearchValue] = useState("")
-  const [filteredData, setFilteredData] = useState(tableData3)
+  const [filteredData, setFilteredData] = useState(tableData2)
 
   const handleSearch = (value: string) => {
     setSearchValue(value)
     if (value.trim() === "") {
-      setFilteredData(tableData3)
+      setFilteredData(tableData2)
     } else {
-      const filtered = tableData3.filter(
+      const filtered = tableData2.filter(
         (item) =>
           item.name.toLowerCase().includes(value.toLowerCase()) ||
           item.email.toLowerCase().includes(value.toLowerCase()) ||
@@ -38,7 +37,7 @@ function Table3Page() {
   }
 
   const handleFilterApply = (filters: Record<string, any>) => {
-    let filtered = tableData3
+    let filtered = tableData2
 
     if (filters.status) {
       filtered = filtered.filter((item) => item.status === filters.status)
@@ -67,18 +66,18 @@ function Table3Page() {
   }
 
   return (
-    <SharedLayout>
+    <>
       <div>
-        <h1 className="text-4xl font-bold tracking-tight">Table 3 - Sales & Support</h1>
+        <h1 className="text-4xl font-bold tracking-tight">Table 2 - Business Team</h1>
         <p className="text-muted-foreground mt-2 text-lg">
-          View and manage sales and support team members
+          View and manage business team members
         </p>
       </div>
 
       {/* Filter Bar & Data Table */}
       <Card>
             <CardHeader>
-              <CardTitle>Sales & Support Team Data</CardTitle>
+              <CardTitle>Business Team Data</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <FilterBar
@@ -106,9 +105,9 @@ function Table3Page() {
                       label: "Department",
                       type: "select",
                       options: [
-                        { label: "Sales", value: "Sales" },
                         { label: "Marketing", value: "Marketing" },
-                        { label: "Engineering", value: "Engineering" },
+                        { label: "Analytics", value: "Analytics" },
+                        { label: "Human Resources", value: "Human Resources" },
                       ],
                     },
                     {
@@ -136,6 +135,6 @@ function Table3Page() {
               />
             </CardContent>
           </Card>
-    </SharedLayout>
+    </>
   )
 }
