@@ -36,7 +36,7 @@ export function useTableFilter<T extends TableItem>(data: T[]) {
     // Apply location filter
     if (filters.location) {
       result = result.filter((item) =>
-        item.location.toLowerCase().includes(filters.location!.toLowerCase()),
+        item.location.toLowerCase().includes(filters.location?.toLowerCase() || ''),
       )
     }
 

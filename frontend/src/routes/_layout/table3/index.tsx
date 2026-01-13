@@ -29,8 +29,8 @@ function SalesAndSupport() {
       filterConfig={{
         departmentOptions: [
           { label: "Sales", value: "Sales" },
-          { label: "Marketing", value: "Marketing" },
-          { label: "Engineering", value: "Engineering" },
+          { label: "Support", value: "Support" },
+          { label: "Customer Success", value: "Customer Success" },
         ],
       }}
     />
