@@ -10,31 +10,31 @@ import { statusVariants } from "@/lib/constants"
 import { getInitials } from "@/lib/utils"
 
 export const Route = createFileRoute("/_layout/table1/$id")({
-  component: Table1DetailPage,
+  component: TeamMemberDetail,
   head: () => ({
     meta: [
       {
-        title: "User Detail - Table 1",
+        title: "Team Member Detail - Engineering",
       },
     ],
   }),
 })
 
-function Table1DetailPage() {
+function TeamMemberDetail() {
   const { id } = Route.useParams()
   const user = tableData1.find((item) => item.id === id)
 
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <h2 className="text-2xl font-bold">User Not Found</h2>
+        <h2 className="text-2xl font-bold">Team Member Not Found</h2>
         <p className="text-muted-foreground">
-          The user with ID {id} does not exist.
+          The team member with ID {id} does not exist.
         </p>
         <Button asChild>
           <Link to="/table1">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Table 1
+            Back to Engineering Team
           </Link>
         </Button>
       </div>
@@ -47,13 +47,15 @@ function Table1DetailPage() {
         <Button variant="outline" size="sm" asChild>
           <Link to="/table1">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Table 1
+            Back to Engineering Team
           </Link>
         </Button>
       </div>
 
       <div>
-        <h1 className="text-4xl font-bold tracking-tight">User Details</h1>
+        <h1 className="text-4xl font-bold tracking-tight">
+          Team Member Details
+        </h1>
         <p className="text-muted-foreground mt-2 text-lg">
           Detailed information for {user.name}
         </p>
