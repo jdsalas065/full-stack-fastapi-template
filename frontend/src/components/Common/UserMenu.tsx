@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import useAuth from "@/hooks/useAuth"
+import { getInitials } from "@/lib/utils"
 
 export function UserMenu() {
   const { user, logout } = useAuth()
@@ -20,11 +21,7 @@ export function UserMenu() {
   }
 
   const initials = user.full_name
-    ? user.full_name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
+    ? getInitials(user.full_name)
     : user.email[0].toUpperCase()
 
   return (

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { tableData2 } from "@/data/tableData2"
 import { statusVariants } from "@/lib/constants"
+import { getInitials } from "@/lib/utils"
 
 export const Route = createFileRoute("/_layout/table2/$id")({
   component: Table2DetailPage,
@@ -69,11 +70,7 @@ function Table2DetailPage() {
               <Avatar className="h-20 w-20">
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback className="text-2xl">
-                  {user.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()}
+                  {getInitials(user.name)}
                 </AvatarFallback>
               </Avatar>
               <div>
