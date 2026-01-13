@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute } from "@tanstack/react-router"
 import { useState } from "react"
 import { EnhancedDataTable } from "@/components/Common/EnhancedDataTable"
 import { FilterBar } from "@/components/Common/FilterBar"
-import { Button } from "@/components/ui/button"
+import { SharedLayout } from "@/components/Common/SharedLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { sampleColumns } from "@/data/sampleColumns"
 import { tableData1 } from "@/data/tableData1"
@@ -67,37 +67,13 @@ function Table1Page() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      {/* Header with Navigation Buttons */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
-        <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            <div className="text-2xl font-bold text-primary">Portal Demo</div>
-            <div className="flex items-center gap-2">
-              <Button asChild variant="ghost">
-                <Link to="/table1">Table 1</Link>
-              </Button>
-              <Button asChild variant="ghost">
-                <Link to="/table2">Table 2</Link>
-              </Button>
-              <Button asChild variant="ghost">
-                <Link to="/table3">Table 3</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1">
-        <div className="container py-8 px-4 space-y-8">
-          {/* Page Header */}
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight">Table 1 - Engineering Team</h1>
-            <p className="text-muted-foreground mt-2 text-lg">
-              View and manage engineering team members
-            </p>
-          </div>
+    <SharedLayout>
+      <div>
+        <h1 className="text-4xl font-bold tracking-tight">Table 1 - Engineering Team</h1>
+        <p className="text-muted-foreground mt-2 text-lg">
+          View and manage engineering team members
+        </p>
+      </div>
 
           {/* Filter Bar & Data Table */}
           <Card>
@@ -160,15 +136,6 @@ function Table1Page() {
               />
             </CardContent>
           </Card>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t py-6">
-        <div className="container px-4 text-center text-sm text-muted-foreground">
-          <p>Portal Frontend Base - 2026</p>
-        </div>
-      </footer>
-    </div>
+    </SharedLayout>
   )
 }
