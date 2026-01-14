@@ -32,7 +32,7 @@ export const fakeApiService = {
     await delay(500)
     const newMember = {
       ...member,
-      id: `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `member-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
     }
     const data = localStorage.getItem("table1Data")
     const members = data ? JSON.parse(data) : []

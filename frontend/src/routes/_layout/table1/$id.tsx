@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { DeleteMemberDialog } from "@/components/Table1/DeleteMemberDialog"
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/_layout/table1/$id")({
 
 function TeamMemberDetail() {
   const { id } = Route.useParams()
+  const navigate = useNavigate()
   const [user, setUser] = useState<TeamMember | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -231,7 +232,7 @@ function TeamMemberDetail() {
         onOpenChange={setShowDeleteDialog}
         member={user}
         onSuccess={() => {
-          window.location.href = "/table1"
+          navigate({ to: "/table1" })
         }}
       />
     </div>
