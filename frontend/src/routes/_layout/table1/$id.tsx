@@ -1,13 +1,15 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { ArrowLeft } from "lucide-react"
-
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { ArrowLeft, Pencil, Trash2 } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
+import { DeleteMemberDialog } from "@/components/Table1/DeleteMemberDialog"
+import { EditMemberModal } from "@/components/Table1/EditMemberModal"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { tableData1 } from "@/data/tableData1"
 import { statusVariants } from "@/lib/constants"
 import { getInitials } from "@/lib/utils"
+import { apiService, type TeamMember } from "@/services/userApi"
 
 export const Route = createFileRoute("/_layout/table1/$id")({
   component: TeamMemberDetail,
@@ -22,7 +24,33 @@ export const Route = createFileRoute("/_layout/table1/$id")({
 
 function TeamMemberDetail() {
   const { id } = Route.useParams()
-  const user = tableData1.find((item) => item.id === id)
+  const navigate = useNavigate()
+  const [user, setUser] = useState<TeamMember | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
+  const loadUser = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const member = await apiService.getById(id)
+      setUser(member)
+    } catch (error) {
+      console.error("Failed to load member:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [id])
+
+  useEffect(() => {
+    loadUser()
+  }, [loadUser])
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">Loading...</div>
+    )
+  }
 
   if (!user) {
     return (
@@ -43,13 +71,32 @@ function TeamMemberDetail() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between">
         <Button variant="outline" size="sm" asChild>
           <Link to="/table1">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Engineering Team
           </Link>
         </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowEditModal(true)}
+          >
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDeleteDialog(true)}
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
+        </div>
       </div>
 
       <div>
@@ -62,7 +109,6 @@ function TeamMemberDetail() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* User Profile Card */}
         <Card>
           <CardHeader>
             <CardTitle>Profile Information</CardTitle>
@@ -99,7 +145,6 @@ function TeamMemberDetail() {
           </CardContent>
         </Card>
 
-        {/* Contact Information Card */}
         <Card>
           <CardHeader>
             <CardTitle>Contact Information</CardTitle>
@@ -126,7 +171,6 @@ function TeamMemberDetail() {
           </CardContent>
         </Card>
 
-        {/* Work Information Card */}
         <Card>
           <CardHeader>
             <CardTitle>Work Information</CardTitle>
@@ -173,6 +217,24 @@ function TeamMemberDetail() {
           </CardContent>
         </Card>
       </div>
+
+      <EditMemberModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        member={user}
+        onSuccess={() => {
+          loadUser()
+        }}
+      />
+
+      <DeleteMemberDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        member={user}
+        onSuccess={() => {
+          navigate({ to: "/table1" })
+        }}
+      />
     </div>
   )
 }
