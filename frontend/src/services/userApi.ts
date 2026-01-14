@@ -1,5 +1,5 @@
+import type { UserCreate, UserPublic, UserUpdate } from "@/client"
 import { UsersService } from "@/client"
-import type { UserPublic, UserCreate, UserUpdate } from "@/client"
 
 export interface TeamMember {
   id: string
@@ -43,7 +43,7 @@ function teamMemberToUserCreate(member: Omit<TeamMember, "id">): UserCreate {
 
 function teamMemberToUserUpdate(member: Partial<TeamMember>): UserUpdate {
   const update: UserUpdate = {}
-  
+
   if (member.name !== undefined) {
     update.full_name = member.name
   }
@@ -53,7 +53,7 @@ function teamMemberToUserUpdate(member: Partial<TeamMember>): UserUpdate {
   if (member.status !== undefined) {
     update.is_active = member.status === "active"
   }
-  
+
   return update
 }
 
@@ -81,9 +81,9 @@ export const apiService = {
 
   async update(id: string, updates: Partial<TeamMember>): Promise<TeamMember> {
     const userUpdate = teamMemberToUserUpdate(updates)
-    const user = await UsersService.updateUser({ 
-      userId: id, 
-      requestBody: userUpdate 
+    const user = await UsersService.updateUser({
+      userId: id,
+      requestBody: userUpdate,
     })
     return userToTeamMember(user)
   },
@@ -92,4 +92,3 @@ export const apiService = {
     await UsersService.deleteUser({ userId: id })
   },
 }
-

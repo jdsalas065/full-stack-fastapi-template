@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { fakeApiService, type TeamMember } from "@/services/fakeApi"
+import { apiService, type TeamMember } from "@/services/userApi"
 
 interface DeleteMemberDialogProps {
   open: boolean
