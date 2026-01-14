@@ -13,6 +13,8 @@ interface TableListProps<T> {
     statusOptions?: { label: string; value: string }[]
     departmentOptions?: { label: string; value: string }[]
   }
+  actionColumn?: any
+  onCreateClick?: () => void
 }
 
 export function TableList<
@@ -32,6 +34,8 @@ export function TableList<
   data,
   navigateToDetail,
   filterConfig,
+  actionColumn,
+  onCreateClick,
 }: TableListProps<T>) {
   const { filteredData, searchValue, handleSearch, handleFilterApply } =
     useTableFilter(data as any)
@@ -96,12 +100,16 @@ export function TableList<
             itemsPerPage={10}
             searchValue={searchValue}
             onSearchChange={handleSearch}
-            onCreateClick={() => alert("Create new user clicked!")}
+            onCreateClick={
+              onCreateClick || (() => alert("Create new user clicked!"))
+            }
             onFilterApply={handleFilterApply}
           />
 
           <EnhancedDataTable
-            columns={sampleColumns}
+            columns={
+              actionColumn ? [...sampleColumns, actionColumn] : sampleColumns
+            }
             data={filteredData as any}
             enableSorting={true}
             enablePagination={true}
