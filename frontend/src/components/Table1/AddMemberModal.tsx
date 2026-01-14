@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { fakeApiService } from "@/services/userApi"
+import { apiService } from "@/services/userApi"
 
 const memberSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -73,7 +73,7 @@ export function AddMemberModal({
   const onSubmit = async (data: MemberFormData) => {
     setIsLoading(true)
     try {
-      await fakeApiService.create({
+      await apiService.create({
         ...data,
         joinDate: new Date().toISOString(),
         lastActive: new Date().toISOString(),
