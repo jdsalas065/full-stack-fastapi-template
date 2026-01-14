@@ -6,8 +6,7 @@ import { AddMemberModal } from "@/components/Table1/AddMemberModal"
 import { DeleteMemberDialog } from "@/components/Table1/DeleteMemberDialog"
 import { EditMemberModal } from "@/components/Table1/EditMemberModal"
 import { Button } from "@/components/ui/button"
-import { tableData1 } from "@/data/tableData1"
-import { fakeApiService, type TeamMember } from "@/services/fakeApi"
+import { apiService, type TeamMember } from "@/services/userApi"
 
 export const Route = createFileRoute("/_layout/table1/")({
   component: EngineeringTeam,
@@ -32,7 +31,7 @@ function EngineeringTeam() {
   const loadData = useCallback(async () => {
     setIsLoading(true)
     try {
-      const members = await fakeApiService.getAll()
+      const members = await apiService.getAll()
       setData(members)
     } catch (error) {
       console.error("Failed to load members:", error)
@@ -42,7 +41,6 @@ function EngineeringTeam() {
   }, [])
 
   useEffect(() => {
-    fakeApiService.initializeData(tableData1)
     loadData()
   }, [loadData])
 

@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { fakeApiService } from "@/services/fakeApi"
+import { fakeApiService } from "@/services/userApi"
 
 const memberSchema = z.object({
   name: z.string().min(1, "Name is required"),

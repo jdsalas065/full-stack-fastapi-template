@@ -32,7 +32,7 @@ export function DeleteMemberDialog({
 
     setIsLoading(true)
     try {
-      await fakeApiService.delete(member.id)
+      await apiService.delete(member.id)
       toast.success("Member deleted successfully")
       onOpenChange(false)
       onSuccess()

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { statusVariants } from "@/lib/constants"
 import { getInitials } from "@/lib/utils"
-import { fakeApiService, type TeamMember } from "@/services/fakeApi"
+import { apiService, type TeamMember } from "@/services/userApi"
 
 export const Route = createFileRoute("/_layout/table1/$id")({
   component: TeamMemberDetail,
@@ -33,7 +33,7 @@ function TeamMemberDetail() {
   const loadUser = useCallback(async () => {
     setIsLoading(true)
     try {
-      const member = await fakeApiService.getById(id)
+      const member = await apiService.getById(id)
       setUser(member)
     } catch (error) {
       console.error("Failed to load member:", error)

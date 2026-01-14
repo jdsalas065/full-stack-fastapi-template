@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { fakeApiService, type TeamMember } from "@/services/fakeApi"
+import { apiService, type TeamMember } from "@/services/fakeApi"
 
 const memberSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -92,7 +92,7 @@ export function EditMemberModal({
 
     setIsLoading(true)
     try {
-      await fakeApiService.update(member.id, data)
+      await apiService.update(member.id, data)
       toast.success("Member updated successfully")
       onOpenChange(false)
       onSuccess()
