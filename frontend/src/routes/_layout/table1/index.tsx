@@ -63,7 +63,7 @@ function EngineeringTeam() {
   const actionColumn = {
     id: "actions",
     header: "Actions",
-    cell: ({ row }: any) => (
+    cell: ({ row }: { row: { original: TeamMember } }) => (
       <div className="flex gap-2">
         <Button
           variant="ghost"
