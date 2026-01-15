@@ -16,6 +16,7 @@ from fastapi import (
     UploadFile,
     status,
 )
+from sqlmodel import select
 
 from app.api.dependencies import CurrentUser, SessionDep
 from app.core.constants import Tags
@@ -59,6 +60,17 @@ async def create_submission(
         SubmissionPublic with submission details and uploaded documents
     """
     try:
+        # Check if submission with the same name already exists
+        existing_submission = session.exec(
+            select(Submission).where(Submission.name == name)
+        ).first()
+        
+        if existing_submission:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Submission with name '{name}' already exists",
+            )
+        
         # Generate task_id
         submission = Submission(
             name=name,

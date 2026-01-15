@@ -150,3 +150,36 @@ def test_get_submission_access_denied(
     # Since the test setup uses a single user, we'll skip this for now
     # or implement when multi-user test fixtures are available
     pass
+
+
+def test_create_submission_duplicate_name(
+    client: TestClient, mock_storage_service: AsyncMock
+) -> None:
+    """Test that creating submission with duplicate name fails."""
+    # Create first submission
+    file_content = b"Test PDF content"
+    files = [
+        ("files", ("invoice.pdf", BytesIO(file_content), "application/pdf")),
+    ]
+
+    data = {
+        "name": "Duplicate Test",
+        "description": "First submission",
+    }
+
+    response = client.post("/api/v1/submissions/", data=data, files=files)
+    assert response.status_code == 201
+
+    # Try to create second submission with the same name
+    files2 = [
+        ("files", ("invoice2.pdf", BytesIO(file_content), "application/pdf")),
+    ]
+
+    data2 = {
+        "name": "Duplicate Test",
+        "description": "Second submission with same name",
+    }
+
+    response2 = client.post("/api/v1/submissions/", data=data2, files=files2)
+    assert response2.status_code == 400
+    assert "already exists" in response2.json()["detail"]
