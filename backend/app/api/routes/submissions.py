@@ -16,6 +16,7 @@ from fastapi import (
     UploadFile,
     status,
 )
+from sqlalchemy.exc import IntegrityError
 
 from app.api.dependencies import CurrentUser, SessionDep
 from app.core.constants import Tags
@@ -91,7 +92,28 @@ async def create_submission(
                 documents.append(doc)
 
             # Commit transaction
-            session.commit()
+            try:
+                session.commit()
+            except IntegrityError as e:
+                # Handle unique constraint violation
+                session.rollback()
+                # Delete uploaded files from MinIO
+                try:
+                    await storage_service.delete_folder(task_id)
+                except Exception as cleanup_error:
+                    logger.error(
+                        f"Failed to cleanup MinIO folder {task_id}: {cleanup_error}"
+                    )
+                # Check if it's a duplicate name error by examining the original exception
+                error_msg = str(e.orig) if hasattr(e, 'orig') else str(e)
+                if "uq_submission_name_owner" in error_msg or ("name" in error_msg.lower() and "owner" in error_msg.lower()):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Submission with name '{name}' already exists",
+                    )
+                # Re-raise if it's a different integrity error
+                raise
+
             session.refresh(submission)
 
             # Build response
