@@ -1,8 +1,13 @@
-import { Filter, Plus, Search } from "lucide-react"
+import { Filter, Plus, Search, Trash2 } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   Select,
   SelectContent,
@@ -10,14 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
 
 export interface FilterField {
   name: string
@@ -33,9 +30,11 @@ export interface FilterBarConfig {
   showSearchBox?: boolean
   showFilterButton?: boolean
   showCreateButton?: boolean
+  showDeleteButton?: boolean
   searchPlaceholder?: string
   createButtonLabel?: string
   advancedFilters?: FilterField[]
+  itemsPerPageOptions?: number[]
 }
 
 interface FilterBarProps {
@@ -43,9 +42,12 @@ interface FilterBarProps {
   totalItems?: number
   itemsPerPage?: number
   searchValue?: string
+  selectedCount?: number
   onSearchChange?: (value: string) => void
   onCreateClick?: () => void
+  onDeleteClick?: () => void
   onFilterApply?: (filters: Record<string, any>) => void
+  onItemsPerPageChange?: (value: number) => void
   className?: string
 }
 
@@ -54,9 +56,12 @@ export function FilterBar({
   totalItems = 0,
   itemsPerPage = 10,
   searchValue = "",
+  selectedCount = 0,
   onSearchChange,
   onCreateClick,
+  onDeleteClick,
   onFilterApply,
+  onItemsPerPageChange,
   className = "",
 }: FilterBarProps) {
   const {
@@ -65,9 +70,11 @@ export function FilterBar({
     showSearchBox = true,
     showFilterButton = true,
     showCreateButton = true,
+    showDeleteButton = false,
     searchPlaceholder = "Search...",
     createButtonLabel = "Create New",
     advancedFilters = [],
+    itemsPerPageOptions = [10, 20, 30, 100],
   } = config
 
   const [filterValues, setFilterValues] = useState<Record<string, any>>({})
@@ -95,19 +102,75 @@ export function FilterBar({
     <div className={`flex flex-col gap-4 ${className}`}>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          {showTotalItems && (
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-foreground">{totalItems}</span>
-              <span>total items</span>
-            </div>
-          )}
-          {showItemsPerPage && (
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-foreground">
-                {itemsPerPage}
-              </span>
-              <span>per page</span>
-            </div>
+          {selectedCount > 0 ? (
+            <>
+              {showDeleteButton && onDeleteClick && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={onDeleteClick}
+                  className="gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete ({selectedCount})
+                </Button>
+              )}
+              {showItemsPerPage && onItemsPerPageChange && (
+                <div className="flex items-center gap-2">
+                  <span>Items per page:</span>
+                  <Select
+                    value={`${itemsPerPage}`}
+                    onValueChange={(value) =>
+                      onItemsPerPageChange(Number(value))
+                    }
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder={itemsPerPage} />
+                    </SelectTrigger>
+                    <SelectContent side="bottom">
+                      {itemsPerPageOptions.map((option) => (
+                        <SelectItem key={option} value={`${option}`}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {showTotalItems && (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-foreground">
+                    {totalItems}
+                  </span>
+                  <span>total items</span>
+                </div>
+              )}
+              {showItemsPerPage && onItemsPerPageChange && (
+                <div className="flex items-center gap-2">
+                  <span>Items per page:</span>
+                  <Select
+                    value={`${itemsPerPage}`}
+                    onValueChange={(value) =>
+                      onItemsPerPageChange(Number(value))
+                    }
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder={itemsPerPage} />
+                    </SelectTrigger>
+                    <SelectContent side="bottom">
+                      {itemsPerPageOptions.map((option) => (
+                        <SelectItem key={option} value={`${option}`}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -126,77 +189,81 @@ export function FilterBar({
           )}
 
           {showFilterButton && advancedFilters.length > 0 && (
-            <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-              <SheetTrigger asChild>
+            <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+              <PopoverTrigger asChild>
                 <Button variant="outline" size="icon">
                   <Filter className="h-4 w-4" />
                 </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Advanced Filters</SheetTitle>
-                  <SheetDescription>
-                    Apply filters to refine your search
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="flex flex-col gap-4 py-4">
-                  {advancedFilters.map((field) => (
-                    <div key={field.name} className="flex flex-col gap-2">
-                      <label
-                        htmlFor={field.name}
-                        className="text-sm font-medium"
-                      >
-                        {field.label}
-                      </label>
-                      {field.type === "select" ? (
-                        <Select
-                          value={filterValues[field.name] || ""}
-                          onValueChange={(value) =>
-                            handleFilterChange(field.name, value)
-                          }
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80">
+                <div className="flex flex-col gap-4">
+                  <div className="space-y-2">
+                    <h4 className="font-medium leading-none">
+                      Advanced Filters
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Apply filters to refine your search
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    {advancedFilters.map((field) => (
+                      <div key={field.name} className="flex flex-col gap-2">
+                        <label
+                          htmlFor={field.name}
+                          className="text-sm font-medium"
                         >
-                          <SelectTrigger id={field.name}>
-                            <SelectValue placeholder="Select..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {field.options?.map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Input
-                          id={field.name}
-                          type={field.type}
-                          placeholder={field.placeholder}
-                          value={filterValues[field.name] || ""}
-                          onChange={(e) =>
-                            handleFilterChange(field.name, e.target.value)
-                          }
-                        />
-                      )}
-                    </div>
-                  ))}
+                          {field.label}
+                        </label>
+                        {field.type === "select" ? (
+                          <Select
+                            value={filterValues[field.name] || ""}
+                            onValueChange={(value) =>
+                              handleFilterChange(field.name, value)
+                            }
+                          >
+                            <SelectTrigger id={field.name}>
+                              <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {field.options?.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            id={field.name}
+                            type={field.type}
+                            placeholder={field.placeholder}
+                            value={filterValues[field.name] || ""}
+                            onChange={(e) =>
+                              handleFilterChange(field.name, e.target.value)
+                            }
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleApplyFilters} className="flex-1">
+                      Apply Filters
+                    </Button>
+                    <Button
+                      onClick={handleResetFilters}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Reset
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleApplyFilters} className="flex-1">
-                    Apply Filters
-                  </Button>
-                  <Button
-                    onClick={handleResetFilters}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    Reset
-                  </Button>
-                </div>
-              </SheetContent>
-            </Sheet>
+              </PopoverContent>
+            </Popover>
           )}
 
           {showCreateButton && (

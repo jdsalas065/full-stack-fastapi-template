@@ -19,13 +19,7 @@ import {
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Table,
   TableBody,
@@ -42,8 +36,10 @@ interface EnhancedDataTableProps<TData, TValue> {
   enableFiltering?: boolean
   enablePagination?: boolean
   enableColumnVisibility?: boolean
+  enableRowSelection?: boolean
   pageSize?: number
   onRowClick?: (row: TData) => void
+  onRowSelectionChange?: (selectedRows: TData[]) => void
 }
 
 export function EnhancedDataTable<TData, TValue>({
@@ -53,17 +49,45 @@ export function EnhancedDataTable<TData, TValue>({
   enableFiltering = false,
   enablePagination = true,
   enableColumnVisibility = false,
+  enableRowSelection = false,
   pageSize = 10,
   onRowClick,
+  onRowSelectionChange,
 }: EnhancedDataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
+  // Create checkbox column if row selection is enabled
+  const selectColumn: ColumnDef<TData, TValue> = {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  }
+
+  // Prepend checkbox column if enabled
+  const tableColumns = enableRowSelection
+    ? [selectColumn, ...columns]
+    : columns
+
   const table = useReactTable({
     data,
-    columns,
+    columns: tableColumns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: enablePagination
       ? getPaginationRowModel()
@@ -75,7 +99,18 @@ export function EnhancedDataTable<TData, TValue>({
     onColumnVisibilityChange: enableColumnVisibility
       ? setColumnVisibility
       : undefined,
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: (updater) => {
+      setRowSelection(updater)
+      if (onRowSelectionChange) {
+        // Get the updated selection state
+        const newSelection =
+          typeof updater === "function" ? updater(rowSelection) : updater
+        const selectedRows = Object.keys(newSelection)
+          .filter((key) => newSelection[key])
+          .map((key) => data[Number.parseInt(key)])
+        onRowSelectionChange(selectedRows)
+      }
+    },
     state: {
       sorting: enableSorting ? sorting : undefined,
       columnFilters: enableFiltering ? columnFilters : undefined,
@@ -87,6 +122,7 @@ export function EnhancedDataTable<TData, TValue>({
         pageSize,
       },
     },
+    enableRowSelection: enableRowSelection,
   })
 
   return (
@@ -153,101 +189,59 @@ export function EnhancedDataTable<TData, TValue>({
       </div>
 
       {enablePagination && table.getPageCount() > 1 && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-t bg-muted/20">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="text-sm text-muted-foreground">
-              Showing{" "}
-              {table.getState().pagination.pageIndex *
-                table.getState().pagination.pageSize +
-                1}{" "}
-              to{" "}
-              {Math.min(
-                (table.getState().pagination.pageIndex + 1) *
-                  table.getState().pagination.pageSize,
-                data.length,
-              )}{" "}
-              of{" "}
-              <span className="font-medium text-foreground">{data.length}</span>{" "}
-              entries
-            </div>
-            <div className="flex items-center gap-x-2">
-              <p className="text-sm text-muted-foreground">Rows per page</p>
-              <Select
-                value={`${table.getState().pagination.pageSize}`}
-                onValueChange={(value) => {
-                  table.setPageSize(Number(value))
-                }}
-              >
-                <SelectTrigger className="h-8 w-[70px]">
-                  <SelectValue
-                    placeholder={table.getState().pagination.pageSize}
-                  />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {[5, 10, 25, 50].map((pageSize) => (
-                    <SelectItem key={pageSize} value={`${pageSize}`}>
-                      {pageSize}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 p-4 border-t bg-muted/20">
+          <div className="flex items-center gap-x-1 text-sm">
+            <span className="text-muted-foreground">Page</span>
+            <span className="font-medium text-foreground">
+              {table.getState().pagination.pageIndex + 1}
+            </span>
+            <span className="text-muted-foreground">of</span>
+            <span className="font-medium text-foreground">
+              {table.getPageCount()}
+            </span>
           </div>
 
-          <div className="flex items-center gap-x-6">
-            <div className="flex items-center gap-x-1 text-sm text-muted-foreground">
-              <span>Page</span>
-              <span className="font-medium text-foreground">
-                {table.getState().pagination.pageIndex + 1}
-              </span>
-              <span>of</span>
-              <span className="font-medium text-foreground">
-                {table.getPageCount()}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-x-1">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Go to first page</span>
-                <ChevronsLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Go to previous page</span>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Go to next page</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Go to last page</span>
-                <ChevronsRight className="h-4 w-4" />
-              </Button>
-            </div>
+          <div className="flex items-center gap-x-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <span className="sr-only">Go to first page</span>
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <span className="sr-only">Go to previous page</span>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              <span className="sr-only">Go to next page</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+            >
+              <span className="sr-only">Go to last page</span>
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       )}

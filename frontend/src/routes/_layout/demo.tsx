@@ -21,6 +21,8 @@ export const Route = createFileRoute("/_layout/demo")({
 function DemoPage() {
   const [searchValue, setSearchValue] = useState("")
   const [filteredData, setFilteredData] = useState(sampleData)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [selectedRows, setSelectedRows] = useState<any[]>([])
 
   const handleSearch = (value: string) => {
     setSearchValue(value)
@@ -64,6 +66,19 @@ function DemoPage() {
     }
 
     setFilteredData(filtered)
+  }
+
+  const handleDelete = () => {
+    const remainingData = filteredData.filter(
+      (item) => !selectedRows.includes(item),
+    )
+    setFilteredData(remainingData)
+    setSelectedRows([])
+    alert(`Deleted ${selectedRows.length} items`)
+  }
+
+  const handleRowSelectionChange = (rows: any[]) => {
+    setSelectedRows(rows)
   }
 
   return (
@@ -126,8 +141,10 @@ function DemoPage() {
               showSearchBox: true,
               showFilterButton: true,
               showCreateButton: true,
+              showDeleteButton: true,
               searchPlaceholder: "Search users...",
               createButtonLabel: "Add User",
+              itemsPerPageOptions: [10, 20, 30, 100],
               advancedFilters: [
                 {
                   name: "status",
@@ -162,11 +179,14 @@ function DemoPage() {
               ],
             }}
             totalItems={filteredData.length}
-            itemsPerPage={10}
+            itemsPerPage={itemsPerPage}
+            selectedCount={selectedRows.length}
             searchValue={searchValue}
             onSearchChange={handleSearch}
             onCreateClick={() => alert("Create new user clicked!")}
+            onDeleteClick={handleDelete}
             onFilterApply={handleFilterApply}
+            onItemsPerPageChange={setItemsPerPage}
           />
 
           <EnhancedDataTable
@@ -174,7 +194,9 @@ function DemoPage() {
             data={filteredData}
             enableSorting={true}
             enablePagination={true}
-            pageSize={5}
+            enableRowSelection={true}
+            pageSize={itemsPerPage}
+            onRowSelectionChange={handleRowSelectionChange}
           />
         </CardContent>
       </Card>
