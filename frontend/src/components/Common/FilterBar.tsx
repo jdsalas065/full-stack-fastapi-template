@@ -1,4 +1,4 @@
-import { Filter, Plus, Search } from "lucide-react"
+import { Filter, Plus, Search, Trash2 } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -30,9 +30,11 @@ export interface FilterBarConfig {
   showSearchBox?: boolean
   showFilterButton?: boolean
   showCreateButton?: boolean
+  showDeleteButton?: boolean
   searchPlaceholder?: string
   createButtonLabel?: string
   advancedFilters?: FilterField[]
+  itemsPerPageOptions?: number[]
 }
 
 interface FilterBarProps {
@@ -40,9 +42,12 @@ interface FilterBarProps {
   totalItems?: number
   itemsPerPage?: number
   searchValue?: string
+  selectedCount?: number
   onSearchChange?: (value: string) => void
   onCreateClick?: () => void
+  onDeleteClick?: () => void
   onFilterApply?: (filters: Record<string, any>) => void
+  onItemsPerPageChange?: (value: number) => void
   className?: string
 }
 
@@ -51,9 +56,12 @@ export function FilterBar({
   totalItems = 0,
   itemsPerPage = 10,
   searchValue = "",
+  selectedCount = 0,
   onSearchChange,
   onCreateClick,
+  onDeleteClick,
   onFilterApply,
+  onItemsPerPageChange,
   className = "",
 }: FilterBarProps) {
   const {
@@ -62,9 +70,11 @@ export function FilterBar({
     showSearchBox = true,
     showFilterButton = true,
     showCreateButton = true,
+    showDeleteButton = false,
     searchPlaceholder = "Search...",
     createButtonLabel = "Create New",
     advancedFilters = [],
+    itemsPerPageOptions = [10, 20, 30, 100],
   } = config
 
   const [filterValues, setFilterValues] = useState<Record<string, any>>({})
@@ -92,19 +102,75 @@ export function FilterBar({
     <div className={`flex flex-col gap-4 ${className}`}>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          {showTotalItems && (
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-foreground">{totalItems}</span>
-              <span>total items</span>
-            </div>
-          )}
-          {showItemsPerPage && (
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-foreground">
-                {itemsPerPage}
-              </span>
-              <span>per page</span>
-            </div>
+          {selectedCount > 0 ? (
+            <>
+              {showDeleteButton && onDeleteClick && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={onDeleteClick}
+                  className="gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete ({selectedCount})
+                </Button>
+              )}
+              {showItemsPerPage && onItemsPerPageChange && (
+                <div className="flex items-center gap-2">
+                  <span>Items per page:</span>
+                  <Select
+                    value={`${itemsPerPage}`}
+                    onValueChange={(value) =>
+                      onItemsPerPageChange(Number(value))
+                    }
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder={itemsPerPage} />
+                    </SelectTrigger>
+                    <SelectContent side="bottom">
+                      {itemsPerPageOptions.map((option) => (
+                        <SelectItem key={option} value={`${option}`}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {showTotalItems && (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-foreground">
+                    {totalItems}
+                  </span>
+                  <span>total items</span>
+                </div>
+              )}
+              {showItemsPerPage && onItemsPerPageChange && (
+                <div className="flex items-center gap-2">
+                  <span>Items per page:</span>
+                  <Select
+                    value={`${itemsPerPage}`}
+                    onValueChange={(value) =>
+                      onItemsPerPageChange(Number(value))
+                    }
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue placeholder={itemsPerPage} />
+                    </SelectTrigger>
+                    <SelectContent side="bottom">
+                      {itemsPerPageOptions.map((option) => (
+                        <SelectItem key={option} value={`${option}`}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </>
           )}
         </div>
 
