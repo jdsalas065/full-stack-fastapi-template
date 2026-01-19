@@ -4,20 +4,17 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
 
 export interface FilterField {
   name: string
@@ -126,77 +123,81 @@ export function FilterBar({
           )}
 
           {showFilterButton && advancedFilters.length > 0 && (
-            <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-              <SheetTrigger asChild>
+            <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+              <PopoverTrigger asChild>
                 <Button variant="outline" size="icon">
                   <Filter className="h-4 w-4" />
                 </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Advanced Filters</SheetTitle>
-                  <SheetDescription>
-                    Apply filters to refine your search
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="flex flex-col gap-4 py-4">
-                  {advancedFilters.map((field) => (
-                    <div key={field.name} className="flex flex-col gap-2">
-                      <label
-                        htmlFor={field.name}
-                        className="text-sm font-medium"
-                      >
-                        {field.label}
-                      </label>
-                      {field.type === "select" ? (
-                        <Select
-                          value={filterValues[field.name] || ""}
-                          onValueChange={(value) =>
-                            handleFilterChange(field.name, value)
-                          }
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80">
+                <div className="flex flex-col gap-4">
+                  <div className="space-y-2">
+                    <h4 className="font-medium leading-none">
+                      Advanced Filters
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Apply filters to refine your search
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    {advancedFilters.map((field) => (
+                      <div key={field.name} className="flex flex-col gap-2">
+                        <label
+                          htmlFor={field.name}
+                          className="text-sm font-medium"
                         >
-                          <SelectTrigger id={field.name}>
-                            <SelectValue placeholder="Select..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {field.options?.map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Input
-                          id={field.name}
-                          type={field.type}
-                          placeholder={field.placeholder}
-                          value={filterValues[field.name] || ""}
-                          onChange={(e) =>
-                            handleFilterChange(field.name, e.target.value)
-                          }
-                        />
-                      )}
-                    </div>
-                  ))}
+                          {field.label}
+                        </label>
+                        {field.type === "select" ? (
+                          <Select
+                            value={filterValues[field.name] || ""}
+                            onValueChange={(value) =>
+                              handleFilterChange(field.name, value)
+                            }
+                          >
+                            <SelectTrigger id={field.name}>
+                              <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {field.options?.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            id={field.name}
+                            type={field.type}
+                            placeholder={field.placeholder}
+                            value={filterValues[field.name] || ""}
+                            onChange={(e) =>
+                              handleFilterChange(field.name, e.target.value)
+                            }
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleApplyFilters} className="flex-1">
+                      Apply Filters
+                    </Button>
+                    <Button
+                      onClick={handleResetFilters}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Reset
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleApplyFilters} className="flex-1">
-                    Apply Filters
-                  </Button>
-                  <Button
-                    onClick={handleResetFilters}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    Reset
-                  </Button>
-                </div>
-              </SheetContent>
-            </Sheet>
+              </PopoverContent>
+            </Popover>
           )}
 
           {showCreateButton && (
