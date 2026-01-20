@@ -88,11 +88,7 @@ full-stack-fastapi-template/
    - Nhưng **KHÔNG ẢNH HƯỞNG** nếu bạn chỉ chạy từ `backend/` hoặc `frontend/`
    - File này chỉ dùng khi chạy `docker compose` từ thư mục gốc
 
-2. **Scripts ở thư mục gốc:**
-   - Các script như `scripts/generate-client.sh` ở thư mục gốc vẫn có thể cần backend code
-   - Nhưng frontend đã có script riêng: `frontend/scripts/generate-client.sh`
-
-3. **Deploy riêng biệt:**
+2. **Deploy riêng biệt:**
    - Backend có thể deploy ở server A với `backend/.env`
    - Frontend có thể deploy ở server B với `frontend/.env`
    - Hoàn toàn độc lập!

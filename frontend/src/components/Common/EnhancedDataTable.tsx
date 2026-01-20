@@ -81,9 +81,7 @@ export function EnhancedDataTable<TData, TValue>({
   }
 
   // Prepend checkbox column if enabled
-  const tableColumns = enableRowSelection
-    ? [selectColumn, ...columns]
-    : columns
+  const tableColumns = enableRowSelection ? [selectColumn, ...columns] : columns
 
   const table = useReactTable({
     data,
@@ -107,7 +105,7 @@ export function EnhancedDataTable<TData, TValue>({
           typeof updater === "function" ? updater(rowSelection) : updater
         const selectedRows = Object.keys(newSelection)
           .filter((key) => newSelection[key])
-          .map((key) => data[Number.parseInt(key)])
+          .map((key) => data[Number.parseInt(key, 10)])
         onRowSelectionChange(selectedRows)
       }
     },

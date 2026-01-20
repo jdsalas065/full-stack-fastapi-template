@@ -13,8 +13,6 @@ full-stack-fastapi-template/
 │   └── ...
 ├── frontend/             # Frontend độc lập
 │   ├── .env              # Environment variables (tạo từ .env.example)
-│   ├── scripts/
-│   │   └── generate-client.sh  # Script tạo client độc lập
 │   ├── Dockerfile
 │   └── ...
 └── ...
@@ -90,21 +88,8 @@ Frontend sẽ chạy tại: http://localhost:5173
 
 ### Tạo OpenAPI Client
 
-Frontend có script riêng để tạo client từ backend API:
-
-```bash
-cd frontend
-bash scripts/generate-client.sh
-```
-
-Script này sẽ:
-1. Tự động lấy OpenAPI schema từ backend đang chạy (theo `VITE_API_URL`)
-2. Hoặc sử dụng file `openapi.json` nếu có sẵn
-3. Tạo TypeScript client
-
 ### Thay Đổi Quan Trọng
 
-- ✅ `frontend/scripts/generate-client.sh` đã được tạo để hoạt động độc lập
 - ✅ Frontend chỉ cần `VITE_API_URL` để kết nối với backend
 - ✅ Không cần backend code để chạy frontend
 
@@ -177,12 +162,6 @@ Frontend kết nối với backend thông qua biến môi trường `VITE_API_UR
 - Kiểm tra `VITE_API_URL` trong `frontend/.env`
 - Đảm bảo backend đang chạy
 - Kiểm tra CORS settings trong backend
-
-### Generate client thất bại
-
-- Đảm bảo backend đang chạy và có thể truy cập
-- Kiểm tra `VITE_API_URL` đúng
-- Hoặc đặt file `openapi.json` trong `frontend/` và chạy `npm run generate-client`
 
 ## Tài Liệu Thêm
 
