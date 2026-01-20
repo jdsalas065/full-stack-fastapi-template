@@ -591,13 +591,6 @@ npm run lint
 npm run type-check
 ```
 
-#### 3. Generate OpenAPI Client
-
-```bash
-# Generate TypeScript client from backend OpenAPI spec
-npm run generate-client
-```
-
 ### IDE Setup
 
 #### VS Code (Recommended)

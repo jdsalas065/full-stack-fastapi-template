@@ -90,21 +90,6 @@ npm run dev
 ### Bước 5: Kiểm tra
 Frontend sẽ chạy tại: http://localhost:5173
 
-## Tạo OpenAPI Client (Frontend)
-
-Khi backend API thay đổi, cần tạo lại client:
-
-```bash
-cd frontend
-bash scripts/generate-client.sh
-```
-
-Hoặc nếu có file `openapi.json`:
-```bash
-cd frontend
-npm run generate-client
-```
-
 ## Chạy Cả Hai
 
 ### Terminal 1 - Backend
@@ -164,11 +149,6 @@ npm run dev
 - Kiểm tra `VITE_API_URL` trong `frontend/.env`
 - Đảm bảo backend đang chạy
 - Kiểm tra CORS trong backend config
-
-### Generate client lỗi
-- Đảm bảo backend đang chạy
-- Kiểm tra `VITE_API_URL` đúng
-- Hoặc đặt `openapi.json` trong `frontend/` và chạy `npm run generate-client`
 
 ## Tài Liệu
 

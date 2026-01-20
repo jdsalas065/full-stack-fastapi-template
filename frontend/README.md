@@ -82,53 +82,6 @@ Notice that this live server is not running inside Docker, it's for local develo
 
 Check the file `package.json` to see other available options.
 
-## Generate OpenAPI Client
-
-The frontend uses a generated TypeScript client based on the backend's OpenAPI schema. You need to regenerate this client whenever the backend API changes.
-
-### Method 1: Using the Script (Recommended)
-
-The frontend includes a standalone script that can fetch the OpenAPI schema from a running backend:
-
-```bash
-# Make sure the backend is running at the URL specified in VITE_API_URL
-bash scripts/generate-client.sh
-```
-
-Or if you have `VITE_API_URL` set differently:
-
-```bash
-VITE_API_URL=http://localhost:8000 bash scripts/generate-client.sh
-```
-
-### Method 2: Manual Generation
-
-1. **Option A: From a running backend**
-   - Ensure your backend is running
-   - Download the OpenAPI JSON from `http://localhost:8000/api/v1/openapi.json`
-   - Save it as `openapi.json` in the `frontend/` directory
-   - Run: `npm run generate-client`
-
-2. **Option B: From an existing openapi.json file**
-   - Place `openapi.json` in the `frontend/` directory
-   - Run: `npm run generate-client`
-
-### Method 3: Using Python (if backend is local)
-
-If you have the backend code locally and Python installed:
-
-```bash
-# From the backend directory
-cd ../backend
-python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > ../frontend/openapi.json
-
-# From the frontend directory
-cd ../frontend
-npm run generate-client
-```
-
-**Note:** Every time the backend API changes (changing the OpenAPI schema), you should regenerate the client using one of the methods above.
-
 ## Using a Remote API
 
 If you want to use a remote API instead of localhost, set the `VITE_API_URL` environment variable:
@@ -214,7 +167,7 @@ The frontend code is structured as follows:
 ```
 frontend/
 ├── src/
-│   ├── client/              # Generated OpenAPI client (auto-generated)
+│   ├── client/              # API client code
 │   ├── components/          # React components
 │   │   ├── Admin/          # Admin components
 │   │   ├── Common/         # Common/shared components
@@ -229,7 +182,6 @@ frontend/
 │   └── data/               # Sample/static data
 ├── public/                 # Static assets
 ├── scripts/                # Utility scripts
-│   └── generate-client.sh # OpenAPI client generator
 ├── .env                    # Environment variables (create from .env.example)
 ├── package.json            # Dependencies and scripts
 ├── vite.config.ts          # Vite configuration
@@ -243,7 +195,6 @@ frontend/
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 - `npm run lint` - Lint code with Biome
-- `npm run generate-client` - Generate TypeScript client from OpenAPI schema
 
 ## Troubleshooting
 
@@ -253,13 +204,6 @@ frontend/
 - Check `VITE_API_URL` in `.env` matches your backend URL
 - Ensure CORS is properly configured on the backend
 - Check browser console for CORS errors
-
-### Client generation fails
-
-- Ensure backend is running and accessible
-- Check `VITE_API_URL` is correct
-- Verify `openapi.json` exists if using manual method
-- Check network connectivity to backend
 
 ### Port already in use
 
@@ -278,6 +222,5 @@ frontend/
 ## Development Tips
 
 1. **Hot Reload**: The dev server automatically reloads on file changes
-2. **Type Safety**: The generated OpenAPI client provides full TypeScript types
-3. **API Changes**: Always regenerate the client after backend API changes
-4. **Remote Backend**: You can develop frontend against a remote/staging backend by setting `VITE_API_URL`
+2. **Type Safety**: The frontend uses TypeScript for type safety
+3. **Remote Backend**: You can develop frontend against a remote/staging backend by setting `VITE_API_URL`
