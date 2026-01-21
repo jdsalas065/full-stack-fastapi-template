@@ -7,7 +7,7 @@ import {
   type UserPublic,
   type UserRegister,
   UsersService,
-} from "@/client"
+} from "@/lib"
 import { handleError } from "@/utils"
 import useCustomToast from "./useCustomToast"
 
