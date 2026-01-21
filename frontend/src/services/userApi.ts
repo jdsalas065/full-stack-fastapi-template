@@ -1,5 +1,5 @@
-import type { UserCreate, UserPublic, UserUpdate } from "@/client"
-import { UsersService } from "@/client"
+import type { UserCreate, UserPublic, UserUpdate } from "@/lib"
+import { UsersService } from "@/lib"
 
 export interface TeamMember {
   id: string
