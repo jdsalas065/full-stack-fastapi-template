@@ -73,38 +73,122 @@ This uses `docker-compose.override.yml` which enables:
 - Exposed ports for all services
 - Development-friendly settings
 
+### 4. Run FastAPI Locally with Docker Services
+
+**Recommended for development** - Run FastAPI locally (faster development) while Docker handles PostgreSQL, MinIO, and frontend:
+
+```bash
+# From project root
+# Start only database and MinIO services
+docker compose up -d db minio
+
+# From backend directory, install and run FastAPI locally
+cd backend
+uv sync
+uv run fastapi dev app/main.py
+```
+
+This setup:
+- ✅ **Fast** - No Docker overhead for backend development
+- ✅ **Hot reload** - Changes instantly reflect without rebuilding containers
+- ✅ **Easier debugging** - Run debugger in your IDE
+- ✅ **Real services** - Database and MinIO still run in Docker for consistency
+
+**Environment variables for local FastAPI + Docker services:**
+```bash
+POSTGRES_SERVER=localhost    # Not 'db' (Docker network)
+POSTGRES_PORT=5432
+MINIO_ENDPOINT=localhost:9000
+MINIO_SECURE=false
+FRONTEND_HOST=http://localhost:5173
+```
+
 ## Local Development (without Docker)
 
-### Using uv
+### Prerequisites for Local Development
 
-From the `backend/` directory, install dependencies:
+1. **Python 3.10+**
+   ```bash
+   # Check Python version
+   python --version
+   ```
 
-```console
-$ uv sync
+2. **uv Package Manager** (recommended - faster than pip)
+   ```bash
+   # Windows (PowerShell)
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+   
+   # macOS/Linux
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+
+3. **PostgreSQL** (or run in Docker)
+   ```bash
+   # Option A: Run PostgreSQL in Docker
+   docker run -d \
+     --name postgres \
+     -e POSTGRES_USER=postgres \
+     -e POSTGRES_PASSWORD=password \
+     -e POSTGRES_DB=fastapi_db \
+     -p 5432:5432 \
+     postgres:16
+   ```
+
+### Setup for Local Development
+
+#### Step 1: Install Python Dependencies
+
+From the `backend/` directory:
+
+```bash
+# Using uv (recommended)
+uv sync
+
+# Or using pip
+pip install -r requirements.txt
 ```
 
-Activate the virtual environment:
+#### Step 2: Setup Environment Variables
 
-```console
-# On Windows
-$ .venv\Scripts\activate
+```bash
+# Copy the example environment file
+cp .env.example .env
 
-# On Unix/MacOS
-$ source .venv/bin/activate
+# Edit .env and set these key variables for local development:
+# POSTGRES_SERVER=localhost
+# POSTGRES_USER=postgres
+# POSTGRES_PASSWORD=password
+# POSTGRES_DB=fastapi_db
+# MINIO_ROOT_USER=minioadmin
+# MINIO_ROOT_PASSWORD=minioadmin
+# MINIO_SERVER=http://localhost:9000
 ```
 
-Run the development server:
+#### Step 3: Run Database Migrations
 
-```console
-$ fastapi dev app/main.py
+```bash
+# Using uv
+uv run alembic upgrade head
+
+# Or if virtual env is activated
+alembic upgrade head
 ```
 
-Make sure your editor is using the correct Python virtual environment at `backend/.venv/bin/python`.
+#### Step 4: Start FastAPI Development Server
 
-**Note:** When running without Docker, you'll need to:
-- Set up PostgreSQL separately
-- Set up MinIO separately
-- Update `.env` to point to your local services (e.g., `POSTGRES_SERVER=localhost`)
+```bash
+# Using uv (recommended - auto-reload enabled)
+uv run fastapi dev app/main.py
+
+# Or if virtual env is activated
+fastapi dev app/main.py
+```
+
+Server runs at: **http://localhost:8000**
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+**Note:** FastAPI dev mode has hot-reload enabled - changes save automatically
 
 ## Environment Variables
 
@@ -384,6 +468,197 @@ docker compose logs -f backend
 ```bash
 docker compose exec backend bash
 ```
+
+### Rebuild and restart
+```bash
+docker compose up -d --build
+```
+
+## Complete Development Setup Guide (Recommended)
+
+### 🎯 **Scenario: Run FastAPI Locally + Docker Services**
+
+This is the **best setup for active backend development**:
+
+#### Step 1: Start Docker Services (Database, MinIO, Frontend)
+
+```bash
+# From project root directory
+cd d:\full-stack-fastapi-template
+
+# Start only the services backend needs
+docker compose up -d db minio
+
+# Optionally: Also start frontend in Docker
+docker compose up -d frontend
+
+# Check services are running
+docker compose ps
+```
+
+Expected services running:
+- PostgreSQL (port 5432)
+- MinIO (port 9000, UI at http://localhost:9001)
+- Frontend (port 5173) - optional
+
+#### Step 2: Install Backend Dependencies
+
+```bash
+# Navigate to backend folder
+cd backend
+
+# Install Python dependencies using uv
+uv sync
+
+# If uv not installed, use pip instead:
+# pip install -r requirements.txt
+```
+
+#### Step 3: Configure Environment for Local Development
+
+Edit `.env` file in `backend/` folder:
+
+```bash
+# Database - use localhost since NOT running in Docker
+POSTGRES_SERVER=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=changethis
+POSTGRES_DB=app
+
+# MinIO - use localhost since running in Docker
+MINIO_ENDPOINT=localhost:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_SECURE=false
+
+# Frontend
+FRONTEND_HOST=http://localhost:5173
+BACKEND_CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+
+# Other settings
+SECRET_KEY=your-secret-key-here
+FIRST_SUPERUSER=admin@example.com
+FIRST_SUPERUSER_PASSWORD=password
+```
+
+#### Step 4: Run Database Migrations
+
+```bash
+# From backend directory
+uv run alembic upgrade head
+```
+
+#### Step 5: Start FastAPI Development Server
+
+```bash
+# From backend directory
+uv run fastapi dev app/main.py
+```
+
+**Server starts at:** http://localhost:8000
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+#### Step 6: Access Services
+
+| Service | URL | Notes |
+|---------|-----|-------|
+| FastAPI Backend | http://localhost:8000 | Your local development server |
+| Swagger UI | http://localhost:8000/docs | API documentation |
+| PostgreSQL | localhost:5432 | Database |
+| MinIO | http://localhost:9001 | File storage UI |
+| Frontend | http://localhost:5173 | React app (if running) |
+
+### 🔧 **Troubleshooting Development Setup**
+
+#### Issue: Connection refused to PostgreSQL
+
+**Cause:** Docker service not running or `POSTGRES_SERVER` is wrong
+
+```bash
+# Check if PostgreSQL is running
+docker compose ps db
+
+# If not, start it
+docker compose up -d db
+
+# In .env, verify: POSTGRES_SERVER=localhost (not 'db')
+```
+
+#### Issue: ModuleNotFoundError when running fastapi dev
+
+**Cause:** Dependencies not installed or wrong Python environment
+
+```bash
+# Make sure uv sync was run
+uv sync
+
+# Or verify Python has packages
+python -c "import fastapi; print(fastapi.__version__)"
+```
+
+#### Issue: Hot reload not working
+
+**Cause:** FastAPI not in watch mode
+
+```bash
+# Make sure using 'fastapi dev' not 'uvicorn'
+uv run fastapi dev app/main.py  # ✅ Has hot reload
+uv run uvicorn app.main:app --reload  # ⚠️ Also works but less reliable
+```
+
+#### Issue: Port already in use (8000, 5432, etc.)
+
+```bash
+# Kill process on port (example: port 8000)
+# Windows PowerShell:
+Get-Process -Id (Get-NetTCPConnection -LocalPort 8000).OwningProcess | Stop-Process
+
+# Or just use different port:
+uv run fastapi dev app/main.py --port 8001
+```
+
+---
+
+### 📋 **Alternative: Full Docker Setup (No Local Backend)**
+
+If you prefer everything in Docker:
+
+```bash
+# From project root
+docker compose up -d
+
+# Apply migrations in Docker
+docker compose exec backend alembic upgrade head
+
+# Backend available at http://localhost:8000
+```
+
+**Pros:** Exact production environment
+**Cons:** Slower development, Docker overhead
+
+---
+
+### 📱 **Running Frontend Locally (Optional)**
+
+If you want frontend dev experience too:
+
+```bash
+# Terminal 1: Start Docker services
+docker compose up -d db minio
+
+# Terminal 2: Start FastAPI locally
+cd backend && uv run fastapi dev app/main.py
+
+# Terminal 3: Start Frontend locally
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend runs at http://localhost:5173
+Backend at http://localhost:8000
 
 ### Rebuild and restart
 ```bash
