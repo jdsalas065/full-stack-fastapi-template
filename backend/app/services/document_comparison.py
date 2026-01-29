@@ -685,6 +685,12 @@ async def compare_document_pair_optimized(
     - Parallel upload to storage
     - Better error handling with granular recovery
 
+    Behavior Changes from Original:
+    - Returns partial results if some pages fail (vs. failing completely)
+    - This provides better resilience but may result in incomplete comparisons
+    - A warning is logged when partial results are returned
+    - Images for successful pages are still uploaded to storage
+
     Args:
         task_id: Unique identifier for the task
         excel_file_name: Name of the Excel file
@@ -696,7 +702,7 @@ async def compare_document_pair_optimized(
 
     Raises:
         ValueError: If page counts don't match
-        Exception: If comparison fails
+        Exception: If comparison fails or all pages fail to process
     """
     logger.info(
         f"[OPTIMIZED] Comparing document pair - task_id: {task_id}, "
@@ -766,16 +772,30 @@ async def compare_document_pair_optimized(
         page_results = await asyncio.gather(*page_tasks, return_exceptions=True)
 
         # Collect results and handle errors
+        failed_pages = []
         for idx, result in enumerate(page_results):
             if isinstance(result, Exception):
+                failed_pages.append(idx + 1)
                 logger.error(f"Error processing page {idx + 1}: {result}", exc_info=result)
                 # Continue processing other pages
                 continue
             if result:
                 result_images.append(result)
 
+        # Log warning if partial results
+        if failed_pages:
+            logger.warning(
+                f"Partial results: {len(failed_pages)} pages failed "
+                f"(pages: {failed_pages}), {len(result_images)} pages succeeded"
+            )
+
         if not result_images:
-            raise Exception("Failed to process any pages")
+            failed_count = len(failed_pages)
+            error_msg = (
+                f"Failed to process all {failed_count} pages. "
+                f"Check logs for individual page errors."
+            )
+            raise Exception(error_msg)
 
         logger.info(
             f"[OPTIMIZED] Document comparison completed. "

@@ -188,7 +188,6 @@ async def process_document_submission(
 )
 async def compare_document_contents(
     payload: CompareDocumentRequest,
-    background_tasks: BackgroundTasks,
 ) -> CompareDocumentResponse:
     """
     Compare Excel and PDF documents using visual OCR comparison.
@@ -197,8 +196,7 @@ async def compare_document_contents(
     1. Load document set from MinIO to local directory
     2. Classify documents by pattern matching (concurrent with comparison prep)
     3. Compare documents with parallel page processing
-    4. Cleanup temporary files in background
-    5. Return result_images with status code 201
+    4. Return result_images with status code 201
 
     Optimizations:
     - Parallel page processing for OCR extraction
@@ -208,7 +206,6 @@ async def compare_document_contents(
 
     Args:
         payload: Compare document request containing task_id and file names
-        background_tasks: FastAPI background tasks for cleanup
 
     Returns:
         CompareDocumentResponse with comparison results including result_images
@@ -221,6 +218,7 @@ async def compare_document_contents(
         compare_document_pair_optimized,
         load_document_set,
     )
+    import asyncio
 
     task_id = payload.task_id.strip()
     excel_file_name = payload.excel_file_name.strip()
@@ -236,8 +234,8 @@ async def compare_document_contents(
         task_dir = await load_document_set(task_id)
         logger.info(f"Loaded document set to: {task_dir}")
 
-        # Step 2: Classify input documents (can be done concurrently)
-        classified_docs = classify_input_documents(task_id)
+        # Step 2: Classify input documents (concurrent with other operations)
+        classified_docs = await asyncio.to_thread(classify_input_documents, task_id)
         logger.info(f"Classified documents: {classified_docs}")
 
         # Step 3: Compare document pair with optimized parallel processing
