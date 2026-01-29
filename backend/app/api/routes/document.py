@@ -179,35 +179,41 @@ async def process_document_submission(
 @router.post(
     "/compare_document_contents",
     response_model=CompareDocumentResponse,
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_201_CREATED,
     summary="Compare document contents",
     description=(
-        "Compare Excel and PDF documents using LLM OCR and extract field differences."
+        "Compare Excel and PDF documents using visual OCR comparison with "
+        "bounding box highlighting of differences."
     ),
 )
 async def compare_document_contents(
     payload: CompareDocumentRequest,
 ) -> CompareDocumentResponse:
     """
-    Compare Excel and PDF documents using LLM OCR.
+    Compare Excel and PDF documents using visual OCR comparison.
 
     Flow:
-    1. Load files from MinIO (download to temp)
-    2. Process Excel (parse) and PDF (LLM OCR)
-    3. Extract fields from both
-    4. Compare field-by-field
-    5. Save OCR results
-    6. Return detailed differences
+    1. request.get_json(): Receive JSON data from request
+    2. load_document_set(task_id): Load document set from MinIO to local directory
+    3. classify_input_documents(task_id): Classify documents by pattern matching
+    4. CDP(task_id, excel_file_name, pdf_file_name): Compare documents and generate images
+    5. Return result_images with status code 201
 
     Args:
         payload: Compare document request containing task_id and file names
 
     Returns:
-        CompareDocumentResponse with comparison results
+        CompareDocumentResponse with comparison results including result_images
 
     Raises:
         HTTPException: If comparison fails
     """
+    from app.services.document_comparison import (
+        CDP,
+        classify_input_documents,
+        load_document_set,
+    )
+
     task_id = payload.task_id.strip()
     excel_file_name = payload.excel_file_name.strip()
     pdf_file_name = payload.pdf_file_name.strip()
@@ -217,50 +223,42 @@ async def compare_document_contents(
         f"excel: {excel_file_name}, pdf: {pdf_file_name}"
     )
 
-    # Step 1: Load files (download to temp)
-    excel_object_name = f"{task_id}/{excel_file_name}"
-    pdf_object_name = f"{task_id}/{pdf_file_name}"
-
-    excel_temp_path: str | None = None
-    pdf_temp_path: str | None = None
-
     try:
-        excel_temp_path = await storage_service.download_file_to_temp(excel_object_name)
-        pdf_temp_path = await storage_service.download_file_to_temp(pdf_object_name)
+        # Step 1: Load document set from MinIO to local directory
+        task_dir = await load_document_set(task_id)
+        logger.info(f"Loaded document set to: {task_dir}")
 
-        # Step 2: Process files in parallel
-        excel_result, pdf_result = await asyncio.gather(
-            document_processor.process_file_from_path(
-                excel_temp_path, excel_file_name, "excel"
-            ),
-            document_processor.process_file_from_path(
-                pdf_temp_path, pdf_file_name, "pdf"
-            ),
-        )
+        # Step 2: Classify input documents
+        classified_docs = classify_input_documents(task_id)
+        logger.info(f"Classified documents: {classified_docs}")
 
-        # Step 3: Compare
-        comparison = field_comparison_service.compare_documents(
-            [
-                excel_result,
-                pdf_result,
-            ]
-        )
+        # Step 3: Compare document pair (CDP)
+        result_images = await CDP(task_id, excel_file_name, pdf_file_name)
+        logger.info(f"Generated {len(result_images)} result images")
 
-        # Step 4: Save OCR results
-        ocr_results = {
-            "task_id": task_id,
-            "excel_result": excel_result,
-            "pdf_result": pdf_result,
-            "comparison": comparison,
-            "processed_at": datetime.utcnow().isoformat(),
-        }
-
-        await storage_service.save_ocr_result(task_id, ocr_results)
-
+        # Return result_images with status 201
         return CompareDocumentResponse(
             status="compared",
-            result=comparison,
+            result={
+                "task_id": task_id,
+                "excel_file": excel_file_name,
+                "pdf_file": pdf_file_name,
+                "classified_documents": classified_docs,
+                "result_images": result_images,
+            },
         )
+    except FileNotFoundError as e:
+        logger.error(f"File not found: {e}", exc_info=e)
+        raise NotFoundException(
+            f"Document not found: {str(e)}",
+            resource=f"task:{task_id}",
+        ) from e
+    except ValueError as e:
+        logger.error(f"Validation error: {e}", exc_info=e)
+        raise ServiceUnavailableException(
+            f"Document comparison validation failed: {str(e)}",
+            service="document_processor",
+        ) from e
     except Exception as e:
         logger.error(
             f"Error in compare_document_contents: {e}",
@@ -270,14 +268,3 @@ async def compare_document_contents(
             f"Document comparison failed: {str(e)}",
             service="document_processor",
         ) from e
-    finally:
-        # Clean up temp files
-        import os
-
-        for temp_path in [excel_temp_path, pdf_temp_path]:
-            if temp_path:
-                try:
-                    if os.path.exists(temp_path):
-                        os.unlink(temp_path)
-                except Exception as e:
-                    logger.warning(f"Failed to delete temp file {temp_path}: {e}")

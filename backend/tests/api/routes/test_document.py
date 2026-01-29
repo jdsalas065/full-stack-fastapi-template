@@ -103,7 +103,8 @@ def test_compare_document_contents_all_params(client: TestClient) -> None:
 
     # Without actual files in MinIO, will get error
     # This verifies the endpoint accepts the request format
-    assert response.status_code in [200, 404, 500]
+    # Expected status code changed from 200 to 201 for success
+    assert response.status_code in [201, 404, 500]
     if response.status_code == 404 or response.status_code == 500:
         # Expected when files don't exist in MinIO
         data = response.json()
