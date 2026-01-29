@@ -8,7 +8,6 @@ WORKDIR /app/
 RUN apt-get update && apt-get install -y \
     libreoffice \
     poppler-utils \
-    tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv

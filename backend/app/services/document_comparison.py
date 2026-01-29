@@ -5,19 +5,34 @@ This module implements the flow for comparing documents:
 1. load_document_set: Download files from MinIO to local directory
 2. classify_input_documents: Classify documents by pattern matching
 3. compare_document_pair (CDP): Compare Excel and PDF documents with visual diff
+
+Libraries used:
+- Step 3 (classify): os (Python standard library)
+- Step 4.1 (conversion): os, subprocess (Python standard library)
+- Step 4.2 (PDF to images): pdf2image, cv2 (opencv-python)
+- Step 4.3 (OCR): openai, base64, re, time (Python standard library)
+- Step 4.4 (draw boxes): cv2 (opencv-python)
+- Step 4.5 (storage): minio
+
+External services:
+- LibreOffice (soffice): Excel to PDF conversion
+- VLM API: Vision Language Model for OCR with bounding boxes
+- MinIO Server: Object storage for processed images
 """
 
+import base64
 import os
 import re
 import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
 import cv2
 import numpy as np
+from openai import OpenAI
 from pdf2image import convert_from_path
 from PIL import Image
-from pytesseract import image_to_data, Output
 
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -272,7 +287,10 @@ def export_pdf_to_images(pdf_path: Path, dpi: int = 200) -> tuple[list[Path], in
 
 def extract_OCR_texts_2(image_path: Path) -> tuple[list[str], list[tuple[int, int, int, int]]]:
     """
-    Extract text and bounding boxes from image using OCR.
+    Extract text and bounding boxes from image using VLM (Vision Language Model) API.
+
+    Uses OpenAI SDK configured with custom VLM endpoint to extract text and
+    bounding box coordinates from images.
 
     Args:
         image_path: Path to the image file
@@ -280,44 +298,109 @@ def extract_OCR_texts_2(image_path: Path) -> tuple[list[str], list[tuple[int, in
     Returns:
         Tuple of (list of text strings, list of bounding boxes)
         Bounding box format: (x, y, width, height)
+
+    Raises:
+        Exception: If VLM API call fails
     """
-    logger.info(f"Extracting OCR text from: {image_path}")
+    logger.info(f"Extracting OCR text from: {image_path} using VLM API")
 
     try:
-        # Load image
-        image = Image.open(image_path)
+        # Load and encode image to base64
+        with open(image_path, "rb") as image_file:
+            image_data = image_file.read()
+        base64_image = base64.b64encode(image_data).decode("utf-8")
 
-        # Perform OCR with bounding box data
-        ocr_data = image_to_data(image, output_type=Output.DICT)
+        # Configure OpenAI client with custom VLM endpoint
+        if settings.VLM_ENDPOINT:
+            client = OpenAI(
+                api_key=settings.VLM_API_KEY or settings.OPENAI_API_KEY,
+                base_url=settings.VLM_ENDPOINT,
+            )
+            model = settings.VLM_ID or settings.OPENAI_MODEL
+        else:
+            # Fall back to standard OpenAI if VLM not configured
+            client = OpenAI(api_key=settings.OPENAI_API_KEY)
+            model = settings.OPENAI_MODEL
+
+        # Prepare prompt for OCR with bounding boxes
+        prompt = """
+        Extract all text from this image along with bounding box coordinates.
+        For each text element, provide:
+        - text: the text content
+        - x: left coordinate
+        - y: top coordinate
+        - width: width of bounding box
+        - height: height of bounding box
+        
+        Return as JSON array: [{"text": "...", "x": 0, "y": 0, "width": 0, "height": 0}, ...]
+        """
+
+        # Call VLM API
+        start_time = time.time()
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}"
+                            },
+                        },
+                    ],
+                }
+            ],
+            temperature=0.1,  # Low temperature for consistent extraction
+            max_tokens=4096,
+        )
+        elapsed_time = time.time() - start_time
+        logger.info(f"VLM API call took {elapsed_time:.2f}s")
+
+        # Parse response
+        content = response.choices[0].message.content
+        
+        # Extract JSON from response (handle markdown code blocks)
+        json_match = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', content, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(1)
+        else:
+            # Try to find JSON array directly
+            json_match = re.search(r'\[.*\]', content, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(0)
+            else:
+                json_str = content
+
+        import json
+        ocr_results = json.loads(json_str)
 
         texts: list[str] = []
         bboxes: list[tuple[int, int, int, int]] = []
 
-        # Extract text and bounding boxes
-        for i, text in enumerate(ocr_data["text"]):
-            # Skip empty text
-            if not text.strip():
-                continue
+        # Extract text and bounding boxes from VLM response
+        for item in ocr_results:
+            if isinstance(item, dict) and "text" in item:
+                text = item["text"]
+                x = int(item.get("x", 0))
+                y = int(item.get("y", 0))
+                w = int(item.get("width", 0))
+                h = int(item.get("height", 0))
 
-            # Get confidence
-            conf = int(ocr_data["conf"][i])
-            if conf < 0:  # Skip low confidence
-                continue
+                if text.strip():  # Skip empty text
+                    texts.append(text)
+                    bboxes.append((x, y, w, h))
 
-            # Get bounding box
-            x = ocr_data["left"][i]
-            y = ocr_data["top"][i]
-            w = ocr_data["width"][i]
-            h = ocr_data["height"][i]
-
-            texts.append(text)
-            bboxes.append((x, y, w, h))
-
-        logger.info(f"Extracted {len(texts)} text elements")
+        logger.info(f"Extracted {len(texts)} text elements using VLM")
         return texts, bboxes
 
     except Exception as e:
-        logger.error(f"Error extracting OCR text: {str(e)}")
+        logger.error(f"Error extracting OCR text with VLM: {str(e)}")
+        # Log more details for debugging
+        logger.error(f"VLM_ENDPOINT: {settings.VLM_ENDPOINT}")
+        logger.error(f"VLM_ID: {settings.VLM_ID}")
         raise
 
 
@@ -417,7 +500,10 @@ async def save_image_to_storage(
     image_path: Path,
 ) -> str:
     """
-    Upload image to MinIO storage.
+    Upload image to MinIO storage output bucket.
+
+    Uploads processed images with bounding box annotations to the
+    vpas-output bucket in MinIO.
 
     Args:
         task_id: Unique identifier for the task
@@ -425,24 +511,26 @@ async def save_image_to_storage(
 
     Returns:
         Object name in MinIO storage
+
+    Raises:
+        Exception: If upload fails
     """
-    logger.info(f"Uploading image to storage: {image_path}")
+    logger.info(f"Uploading image to vpas-output bucket: {image_path}")
 
     try:
-        # Determine object name in MinIO (use output bucket)
+        # Determine object name in MinIO output bucket
         filename = image_path.name
         object_name = f"{task_id}/{filename}"
 
-        # Upload to MinIO
-        # Note: This assumes vpas-output bucket exists
-        # We'll need to configure a separate output bucket
+        # Upload to MinIO output bucket (vpas-output)
         await storage_service.upload_file(
             str(image_path),
             object_name,
             content_type="image/jpeg",
+            bucket=settings.MINIO_OUTPUT_BUCKET,
         )
 
-        logger.info(f"Uploaded image to: {object_name}")
+        logger.info(f"Uploaded image to output bucket: {object_name}")
         return object_name
 
     except Exception as e:

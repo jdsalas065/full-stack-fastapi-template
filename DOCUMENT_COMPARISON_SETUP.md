@@ -8,9 +8,53 @@ The `/compare_document_contents` API endpoint implements a visual document compa
 1. Downloads documents from MinIO storage to local directory
 2. Classifies documents by pattern matching
 3. Converts Excel files to PDF
-4. Extracts text and bounding boxes using OCR
+4. Extracts text and bounding boxes using VLM (Vision Language Model) API
 5. Compares documents and highlights differences
 6. Returns annotated images with highlighted differences
+
+## Libraries Used by Step
+
+### Step 3: classify_input_documents(task_id)
+- **Libraries**: `os` (Python standard library)
+- **External Services**: None
+
+### Step 4: CDP(task_id, excel_file_name, pdf_file_name)
+
+#### 4.1 File Name Handling & Excel to PDF Conversion
+- **Libraries**: `os`, `subprocess` (Python standard library)
+- **External Service**: LibreOffice (soffice) - Converts Excel to PDF in headless mode
+
+#### 4.2 Export PDF to Images
+- **Libraries**: `pdf2image`, `cv2` (opencv-python) - PDF conversion and image processing (autocrop whitespace)
+- **External Services**: None
+
+#### 4.3 Extract Text (OCR) - extract_OCR_texts_2
+- **Libraries**: `openai` (SDK configured for custom endpoint), `base64`, `re`, `time` (Python standard library)
+- **External Service**: VLM Endpoint (Vision Language Model API) - Configured in settings (VLM_ENDPOINT and VLM_ID) for text recognition and bounding box coordinates from images
+
+#### 4.4 Process Differences & Draw Boxes
+- **Libraries**: `cv2` (opencv-python) - Draws rectangles (bounding boxes) at difference locations
+- **External Services**: None
+
+#### 4.5 Save Images - save_image_to_storage
+- **Libraries**: `minio` (Python client for MinIO)
+- **External Service**: MinIO Server - Upload processed images to object storage (bucket: vpas-output)
+
+## Summary of Dependencies
+
+### Main Python Libraries
+- `os`, `subprocess` - File operations and system commands
+- `pdf2image` - PDF to image conversion
+- `opencv-python` (cv2) - Image processing and bounding box drawing
+- `minio` - MinIO object storage client
+- `openai` - API client for VLM endpoint
+
+### External Services
+1. **LibreOffice (soffice)** - Excel to PDF file conversion
+2. **VLM API** - Vision Language Model for OCR with bounding boxes
+3. **MinIO Server** - Object storage for input and output files
+   - Input bucket: As configured in MINIO_BUCKET
+   - Output bucket: vpas-output (for annotated images)
 
 ## System Dependencies
 
@@ -40,24 +84,42 @@ apk add --no-cache poppler-utils
 brew install poppler
 ```
 
-### Tesseract OCR (for text extraction)
-```bash
-# Ubuntu/Debian
-apt-get update && apt-get install -y tesseract-ocr
-
-# Alpine (for Docker)
-apk add --no-cache tesseract-ocr
-
-# macOS
-brew install tesseract
-```
-
 ## Python Dependencies
 
 The following Python packages are required (already added to `pyproject.toml`):
 - `pdf2image>=1.16.0` - Convert PDF pages to images
-- `pytesseract>=0.3.10` - OCR text extraction
 - `opencv-python>=4.8.0` - Image processing and bounding box drawing
+- `openai>=1.12.0` - OpenAI SDK (configured with custom VLM endpoint)
+
+## Configuration
+
+### Environment Variables
+
+Add the following to your `.env` file:
+
+```env
+# VLM (Vision Language Model) Settings for OCR
+VLM_ENDPOINT=https://your-vlm-api-endpoint.com/v1
+VLM_ID=your-vlm-model-id
+VLM_API_KEY=your-vlm-api-key
+
+# MinIO Output Bucket
+MINIO_OUTPUT_BUCKET=vpas-output
+
+# Optional: OpenAI settings (if using standard OpenAI as fallback)
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_MODEL=gpt-4o
+```
+
+### VLM API Configuration
+
+The VLM (Vision Language Model) API is used for OCR text extraction with bounding boxes. The system uses the OpenAI SDK configured with a custom endpoint:
+
+- **VLM_ENDPOINT**: Base URL for the VLM API endpoint
+- **VLM_ID**: Model identifier for the VLM
+- **VLM_API_KEY**: API key for authentication (falls back to OPENAI_API_KEY if not set)
+
+If VLM settings are not configured, the system will fall back to standard OpenAI GPT-4 Vision.
 
 ## Docker Setup
 
@@ -70,7 +132,6 @@ FROM python:3.10
 RUN apt-get update && apt-get install -y \
     libreoffice \
     poppler-utils \
-    tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 
 # ... rest of Dockerfile
@@ -138,21 +199,24 @@ The `compare_document_pair` (CDP) function performs the following steps:
 2. **Convert Excel to PDF**: Uses LibreOffice headless mode (`soffice --headless`)
 3. **Export PDFs to Images**: Converts both PDFs to JPG images using pdf2image
 4. **Validate Page Count**: Ensures both documents have the same number of pages
-5. **Extract OCR Text**: Uses Tesseract to extract text and bounding boxes from each page
+5. **Extract OCR Text**: Uses VLM API to extract text and bounding boxes from each page
 6. **Find Differences**: Compares normalized text (uppercase, no spaces) between documents
 7. **Draw Bounding Boxes**: Highlights differences with red rectangles using OpenCV
-8. **Upload to Storage**: Saves annotated images to MinIO bucket
+8. **Upload to Storage**: Saves annotated images to MinIO output bucket (vpas-output)
 
 ## Storage
 
 - **Input Files**: Downloaded from MinIO bucket to `/tmp/documents/{task_id}/`
-- **Output Files**: Uploaded to MinIO bucket at `{task_id}/{filename}`
-- **Bucket**: Uses the configured MinIO bucket (default: as per `settings.MINIO_BUCKET`)
+- **Output Files**: Uploaded to MinIO output bucket `vpas-output` at `{task_id}/{filename}`
+- **Buckets**: 
+  - Input: Configured in `MINIO_BUCKET` (default: "documents")
+  - Output: Configured in `MINIO_OUTPUT_BUCKET` (default: "vpas-output")
 
 ## Error Handling
 
 - **FileNotFoundError**: Returns 404 if documents not found
 - **ValueError**: Returns 503 if page counts don't match
+- **VLM API Errors**: Returns 503 with error details if OCR fails
 - **General Errors**: Returns 503 with error details
 
 ## Testing
@@ -160,13 +224,15 @@ The `compare_document_pair` (CDP) function performs the following steps:
 To test the endpoint:
 
 1. Upload Excel and PDF files to MinIO under a task_id
-2. Call the API endpoint with the task_id and file names
-3. Check the response for `result_images` array
-4. Download the annotated images from MinIO to verify highlights
+2. Configure VLM API settings in environment variables
+3. Call the API endpoint with the task_id and file names
+4. Check the response for `result_images` array
+5. Download the annotated images from MinIO output bucket to verify highlights
 
 ## Performance Considerations
 
-- OCR processing can be CPU-intensive for large documents
+- VLM API calls can be time-intensive for large documents
 - Consider implementing background task processing for large documents
 - Temp files are stored in `/tmp/documents/` and should be cleaned up periodically
 - Image resolution (DPI) affects both quality and processing time (default: 200 DPI)
+- VLM API may have rate limits - implement appropriate retry logic
