@@ -4,7 +4,12 @@ Document comparison module for comparing Excel and PDF documents.
 This module implements the flow for comparing documents:
 1. load_document_set: Download files from MinIO to local directory
 2. classify_input_documents: Classify documents by pattern matching
-3. compare_document_pair (CDP): Compare Excel and PDF documents with visual diff
+3. compare_document_pair_optimized: Compare Excel and PDF documents with parallel processing
+
+The optimized implementation uses parallel processing at multiple levels:
+- Concurrent PDF to image conversion
+- Parallel page processing for all pages
+- Concurrent OCR extraction, bounding box drawing, and storage uploads
 
 Libraries used:
 - Step 3 (classify): os (Python standard library)
@@ -13,6 +18,7 @@ Libraries used:
 - Step 4.3 (OCR): openai, base64, re, time (Python standard library)
 - Step 4.4 (draw boxes): cv2 (opencv-python)
 - Step 4.5 (storage): minio
+- Parallel processing: asyncio (Python standard library)
 
 External services:
 - LibreOffice (soffice): Excel to PDF conversion
@@ -20,6 +26,7 @@ External services:
 - MinIO Server: Object storage for processed images
 """
 
+import asyncio
 import base64
 import os
 import re
@@ -538,22 +545,35 @@ async def save_image_to_storage(
         raise
 
 
-async def compare_document_pair(
+async def compare_document_pair_optimized(
     task_id: str,
     excel_file_name: str,
     pdf_file_name: str,
 ) -> list[dict[str, str]]:
     """
-    Compare Excel and PDF documents (CDP function).
+    Optimized version of compare_document_pair with parallel processing.
 
     Performs visual comparison between Excel and PDF documents:
     1. Handle duplicate names
     2. Convert Excel to PDF
-    3. Export both PDFs to images
-    4. Extract text and bounding boxes from images
-    5. Find differences
-    6. Draw bounding boxes on images
-    7. Upload results to storage
+    3. Export both PDFs to images (concurrent)
+    4. Extract text and bounding boxes from images (parallel processing)
+    5. Find differences (parallel)
+    6. Draw bounding boxes on images (parallel)
+    7. Upload results to storage (parallel)
+
+    Optimizations:
+    - Parallel PDF to image conversion where possible
+    - Parallel OCR extraction for all pages
+    - Parallel bounding box drawing
+    - Parallel upload to storage
+    - Better error handling with granular recovery
+
+    Behavior Changes from Original:
+    - Returns partial results if some pages fail (vs. failing completely)
+    - This provides better resilience but may result in incomplete comparisons
+    - A warning is logged when partial results are returned
+    - Images for successful pages are still uploaded to storage
 
     Args:
         task_id: Unique identifier for the task
@@ -566,10 +586,10 @@ async def compare_document_pair(
 
     Raises:
         ValueError: If page counts don't match
-        Exception: If comparison fails
+        Exception: If comparison fails or all pages fail to process
     """
     logger.info(
-        f"Comparing document pair - task_id: {task_id}, "
+        f"[OPTIMIZED] Comparing document pair - task_id: {task_id}, "
         f"excel: {excel_file_name}, pdf: {pdf_file_name}"
     )
 
@@ -597,16 +617,19 @@ async def compare_document_pair(
             excel_path = renamed_excel_path
             logger.info(f"Renamed Excel file to avoid collision: {excel_path}")
 
-        # Step 2: Convert Excel to PDF
-        excel_pdf_path = convert_excel_to_pdf(excel_path)
+        # Step 2: Convert Excel to PDF (blocking operation, but necessary)
+        excel_pdf_path = await asyncio.to_thread(convert_excel_to_pdf, excel_path)
 
-        # Step 3: Export Excel PDF to images
-        excel_image_paths, excel_num_pages = export_pdf_to_images(excel_pdf_path)
+        # Step 3: Export both PDFs to images concurrently
+        logger.info("Exporting PDFs to images in parallel...")
+        excel_images_task = asyncio.to_thread(export_pdf_to_images, excel_pdf_path)
+        pdf_images_task = asyncio.to_thread(export_pdf_to_images, pdf_path)
+        
+        (excel_image_paths, excel_num_pages), (pdf_image_paths, pdf_num_pages) = (
+            await asyncio.gather(excel_images_task, pdf_images_task)
+        )
 
-        # Step 4: Export PDF to images
-        pdf_image_paths, pdf_num_pages = export_pdf_to_images(pdf_path)
-
-        # Step 5: Check page count
+        # Step 4: Check page count
         if excel_num_pages != pdf_num_pages:
             error_msg = (
                 f"INVALID! The two docs have different numbers of pages! "
@@ -615,49 +638,139 @@ async def compare_document_pair(
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-        # Step 6: Compare each page
+        logger.info(f"Processing {excel_num_pages} pages in parallel...")
+
+        # Step 5: Process all pages in parallel
+        page_tasks = []
         for page_num in range(excel_num_pages):
-            excel_img_path = excel_image_paths[page_num]
-            pdf_img_path = pdf_image_paths[page_num]
+            task = _process_page_pair(
+                task_id,
+                excel_image_paths[page_num],
+                pdf_image_paths[page_num],
+                page_num,
+                excel_num_pages,
+            )
+            page_tasks.append(task)
 
-            # Extract OCR texts and bounding boxes
-            excel_texts, excel_bboxes = extract_OCR_texts_2(excel_img_path)
-            pdf_texts, pdf_bboxes = extract_OCR_texts_2(pdf_img_path)
+        # Wait for all pages to be processed
+        page_results = await asyncio.gather(*page_tasks, return_exceptions=True)
 
-            # Find differences
-            excel_diff_indices, pdf_diff_indices = find_text_differences(
-                excel_texts, pdf_texts
+        # Collect results and handle errors
+        failed_pages = []
+        for idx, result in enumerate(page_results):
+            if isinstance(result, Exception):
+                failed_pages.append(idx + 1)
+                logger.error(f"Error processing page {idx + 1}: {result}", exc_info=result)
+                # Continue processing other pages
+                continue
+            if result:
+                result_images.append(result)
+
+        # Log warning if partial results
+        if failed_pages:
+            logger.warning(
+                f"Partial results: {len(failed_pages)} pages failed "
+                f"(pages: {failed_pages}), {len(result_images)} pages succeeded"
             )
 
-            # Draw bounding boxes
-            excel_bbox_path = draw_bounding_boxes(
-                excel_img_path, excel_bboxes, excel_diff_indices
+        if not result_images:
+            failed_count = len(failed_pages)
+            error_msg = (
+                f"Failed to process all {failed_count} pages. "
+                f"Check logs for individual page errors."
             )
-            pdf_bbox_path = draw_bounding_boxes(
-                pdf_img_path, pdf_bboxes, pdf_diff_indices
-            )
+            raise Exception(error_msg)
 
-            # Upload to storage
-            await save_image_to_storage(task_id, excel_bbox_path)
-            await save_image_to_storage(task_id, pdf_bbox_path)
-
-            # Add to result
-            result_images.append(
-                {
-                    "EXCEL": excel_bbox_path.name,
-                    "PDF": pdf_bbox_path.name,
-                }
-            )
-
-            logger.info(f"Processed page {page_num + 1}/{excel_num_pages}")
-
-        logger.info(f"Document comparison completed. Generated {len(result_images)} result pages")
+        logger.info(
+            f"[OPTIMIZED] Document comparison completed. "
+            f"Generated {len(result_images)} result pages"
+        )
         return result_images
 
     except Exception as e:
-        logger.error(f"Error comparing document pair: {str(e)}")
+        logger.error(f"Error in optimized document comparison: {str(e)}")
         raise
 
 
-# Alias for CDP
-CDP = compare_document_pair
+async def _process_page_pair(
+    task_id: str,
+    excel_img_path: Path,
+    pdf_img_path: Path,
+    page_num: int,
+    total_pages: int,
+) -> dict[str, str]:
+    """
+    Process a single page pair (Excel and PDF) in parallel.
+
+    Extracts OCR text, finds differences, draws bounding boxes,
+    and uploads results to storage.
+
+    Args:
+        task_id: Unique identifier for the task
+        excel_img_path: Path to Excel page image
+        pdf_img_path: Path to PDF page image
+        page_num: Current page number (0-indexed)
+        total_pages: Total number of pages
+
+    Returns:
+        Dictionary with EXCEL and PDF result image names
+
+    Raises:
+        Exception: If processing fails
+    """
+    try:
+        # Step 1: Extract OCR texts and bounding boxes in parallel
+        logger.debug(f"Page {page_num + 1}/{total_pages}: Extracting OCR text...")
+        excel_ocr_task = asyncio.to_thread(extract_OCR_texts_2, excel_img_path)
+        pdf_ocr_task = asyncio.to_thread(extract_OCR_texts_2, pdf_img_path)
+        
+        (excel_texts, excel_bboxes), (pdf_texts, pdf_bboxes) = await asyncio.gather(
+            excel_ocr_task, pdf_ocr_task
+        )
+
+        # Step 2: Find differences (CPU-bound but fast)
+        logger.debug(f"Page {page_num + 1}/{total_pages}: Finding differences...")
+        excel_diff_indices, pdf_diff_indices = find_text_differences(
+            excel_texts, pdf_texts
+        )
+
+        # Step 3: Draw bounding boxes in parallel
+        logger.debug(f"Page {page_num + 1}/{total_pages}: Drawing bounding boxes...")
+        excel_bbox_task = asyncio.to_thread(
+            draw_bounding_boxes, excel_img_path, excel_bboxes, excel_diff_indices
+        )
+        pdf_bbox_task = asyncio.to_thread(
+            draw_bounding_boxes, pdf_img_path, pdf_bboxes, pdf_diff_indices
+        )
+        
+        excel_bbox_path, pdf_bbox_path = await asyncio.gather(
+            excel_bbox_task, pdf_bbox_task
+        )
+
+        # Step 4: Upload to storage in parallel
+        logger.debug(f"Page {page_num + 1}/{total_pages}: Uploading to storage...")
+        await asyncio.gather(
+            save_image_to_storage(task_id, excel_bbox_path),
+            save_image_to_storage(task_id, pdf_bbox_path),
+        )
+
+        logger.info(f"Page {page_num + 1}/{total_pages}: Processing completed")
+
+        # Return result
+        return {
+            "EXCEL": excel_bbox_path.name,
+            "PDF": pdf_bbox_path.name,
+        }
+
+    except Exception as e:
+        logger.error(
+            f"Error processing page {page_num + 1}/{total_pages}: {str(e)}",
+            exc_info=e,
+        )
+        raise
+
+
+# Alias for CDP (now points to optimized version)
+CDP = compare_document_pair_optimized
+# Keep compare_document_pair as alias for backward compatibility
+compare_document_pair = compare_document_pair_optimized
