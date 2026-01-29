@@ -4,8 +4,12 @@ Document comparison module for comparing Excel and PDF documents.
 This module implements the flow for comparing documents:
 1. load_document_set: Download files from MinIO to local directory
 2. classify_input_documents: Classify documents by pattern matching
-3. compare_document_pair (CDP): Compare Excel and PDF documents with visual diff
-4. compare_document_pair_optimized: Optimized version with parallel processing
+3. compare_document_pair_optimized: Compare Excel and PDF documents with parallel processing
+
+The optimized implementation uses parallel processing at multiple levels:
+- Concurrent PDF to image conversion
+- Parallel page processing for all pages
+- Concurrent OCR extraction, bounding box drawing, and storage uploads
 
 Libraries used:
 - Step 3 (classify): os (Python standard library)
@@ -14,6 +18,7 @@ Libraries used:
 - Step 4.3 (OCR): openai, base64, re, time (Python standard library)
 - Step 4.4 (draw boxes): cv2 (opencv-python)
 - Step 4.5 (storage): minio
+- Parallel processing: asyncio (Python standard library)
 
 External services:
 - LibreOffice (soffice): Excel to PDF conversion
@@ -540,127 +545,6 @@ async def save_image_to_storage(
         raise
 
 
-async def compare_document_pair(
-    task_id: str,
-    excel_file_name: str,
-    pdf_file_name: str,
-) -> list[dict[str, str]]:
-    """
-    Compare Excel and PDF documents (CDP function).
-
-    Performs visual comparison between Excel and PDF documents:
-    1. Handle duplicate names
-    2. Convert Excel to PDF
-    3. Export both PDFs to images
-    4. Extract text and bounding boxes from images
-    5. Find differences
-    6. Draw bounding boxes on images
-    7. Upload results to storage
-
-    Args:
-        task_id: Unique identifier for the task
-        excel_file_name: Name of the Excel file
-        pdf_file_name: Name of the PDF file
-
-    Returns:
-        List of dictionaries containing result image names:
-        [{"EXCEL": "excel_page_1_with_bboxes.jpg", "PDF": "pdf_page_1_with_bboxes.jpg"}, ...]
-
-    Raises:
-        ValueError: If page counts don't match
-        Exception: If comparison fails
-    """
-    logger.info(
-        f"Comparing document pair - task_id: {task_id}, "
-        f"excel: {excel_file_name}, pdf: {pdf_file_name}"
-    )
-
-    task_dir = BASE_DOCUMENT_PATH / task_id
-    excel_path = task_dir / excel_file_name
-    pdf_path = task_dir / pdf_file_name
-
-    # Verify files exist
-    if not excel_path.exists():
-        raise FileNotFoundError(f"Excel file not found: {excel_path}")
-    if not pdf_path.exists():
-        raise FileNotFoundError(f"PDF file not found: {pdf_path}")
-
-    result_images: list[dict[str, str]] = []
-
-    try:
-        # Step 1: Handle duplicate names
-        excel_stem = excel_path.stem
-        pdf_stem = pdf_path.stem
-
-        if excel_stem == pdf_stem:
-            # Rename Excel file to avoid collision
-            renamed_excel_path = task_dir / f"{excel_stem}_RENAMED{excel_path.suffix}"
-            excel_path.rename(renamed_excel_path)
-            excel_path = renamed_excel_path
-            logger.info(f"Renamed Excel file to avoid collision: {excel_path}")
-
-        # Step 2: Convert Excel to PDF
-        excel_pdf_path = convert_excel_to_pdf(excel_path)
-
-        # Step 3: Export Excel PDF to images
-        excel_image_paths, excel_num_pages = export_pdf_to_images(excel_pdf_path)
-
-        # Step 4: Export PDF to images
-        pdf_image_paths, pdf_num_pages = export_pdf_to_images(pdf_path)
-
-        # Step 5: Check page count
-        if excel_num_pages != pdf_num_pages:
-            error_msg = (
-                f"INVALID! The two docs have different numbers of pages! "
-                f"Excel: {excel_num_pages}, PDF: {pdf_num_pages}"
-            )
-            logger.error(error_msg)
-            raise ValueError(error_msg)
-
-        # Step 6: Compare each page
-        for page_num in range(excel_num_pages):
-            excel_img_path = excel_image_paths[page_num]
-            pdf_img_path = pdf_image_paths[page_num]
-
-            # Extract OCR texts and bounding boxes
-            excel_texts, excel_bboxes = extract_OCR_texts_2(excel_img_path)
-            pdf_texts, pdf_bboxes = extract_OCR_texts_2(pdf_img_path)
-
-            # Find differences
-            excel_diff_indices, pdf_diff_indices = find_text_differences(
-                excel_texts, pdf_texts
-            )
-
-            # Draw bounding boxes
-            excel_bbox_path = draw_bounding_boxes(
-                excel_img_path, excel_bboxes, excel_diff_indices
-            )
-            pdf_bbox_path = draw_bounding_boxes(
-                pdf_img_path, pdf_bboxes, pdf_diff_indices
-            )
-
-            # Upload to storage
-            await save_image_to_storage(task_id, excel_bbox_path)
-            await save_image_to_storage(task_id, pdf_bbox_path)
-
-            # Add to result
-            result_images.append(
-                {
-                    "EXCEL": excel_bbox_path.name,
-                    "PDF": pdf_bbox_path.name,
-                }
-            )
-
-            logger.info(f"Processed page {page_num + 1}/{excel_num_pages}")
-
-        logger.info(f"Document comparison completed. Generated {len(result_images)} result pages")
-        return result_images
-
-    except Exception as e:
-        logger.error(f"Error comparing document pair: {str(e)}")
-        raise
-
-
 async def compare_document_pair_optimized(
     task_id: str,
     excel_file_name: str,
@@ -886,7 +770,7 @@ async def _process_page_pair(
         raise
 
 
-# Alias for CDP
-CDP = compare_document_pair
-# New optimized alias
-CDP_optimized = compare_document_pair_optimized
+# Alias for CDP (now points to optimized version)
+CDP = compare_document_pair_optimized
+# Keep compare_document_pair as alias for backward compatibility
+compare_document_pair = compare_document_pair_optimized
