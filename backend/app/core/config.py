@@ -83,6 +83,14 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o"  # or "gpt-4-vision-preview"
     OPENAI_TIMEOUT: float = 30.0  # Timeout in seconds for OpenAI API calls
 
+    # VLM (Vision Language Model) Settings for OCR with bounding boxes
+    VLM_ENDPOINT: str = ""  # Custom VLM API endpoint
+    VLM_ID: str = ""  # VLM model identifier
+    VLM_API_KEY: str = ""  # VLM API key (if different from OpenAI)
+
+    # MinIO Output Bucket for processed images
+    MINIO_OUTPUT_BUCKET: str = "vpas-output"
+
     # Rate Limiting
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_PER_MINUTE: int = 60

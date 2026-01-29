@@ -44,25 +44,30 @@ class StorageService:
             secure=settings.MINIO_SECURE,
         )
         self.bucket = settings.MINIO_BUCKET
+        self.output_bucket = settings.MINIO_OUTPUT_BUCKET
 
-    async def ensure_bucket_exists(self) -> None:
+    async def ensure_bucket_exists(self, bucket_name: str | None = None) -> None:
         """
         Ensure the bucket exists in MinIO.
+
+        Args:
+            bucket_name: Bucket name to check/create. If None, uses default bucket.
 
         Creates the bucket if it doesn't exist.
 
         Raises:
             S3Error: If MinIO operation fails
         """
+        bucket = bucket_name or self.bucket
         try:
             bucket_exists = await asyncio.to_thread(
-                self.client.bucket_exists, self.bucket
+                self.client.bucket_exists, bucket
             )
             if not bucket_exists:
                 await asyncio.to_thread(
-                    self.client.make_bucket, self.bucket
+                    self.client.make_bucket, bucket
                 )
-                logger.info(f"Created bucket: {self.bucket}")
+                logger.info(f"Created bucket: {bucket}")
         except S3Error as e:
             logger.error(f"Error ensuring bucket exists: {e}")
             raise
@@ -270,7 +275,13 @@ class StorageService:
             logger.error(f"Error getting file {object_name}: {e}")
             raise
 
-    async def upload_file(self, file_path: str, object_name: str, content_type: str | None = None) -> str:
+    async def upload_file(
+        self,
+        file_path: str,
+        object_name: str,
+        content_type: str | None = None,
+        bucket: str | None = None,
+    ) -> str:
         """
         Upload file from local path to MinIO.
 
@@ -278,6 +289,7 @@ class StorageService:
             file_path: Local file path to upload
             object_name: Destination object name in MinIO
             content_type: Optional content type for the file
+            bucket: Target bucket name. If None, uses default bucket.
 
         Returns:
             Object name where file was uploaded
@@ -285,15 +297,20 @@ class StorageService:
         Raises:
             S3Error: If MinIO operation fails
         """
+        target_bucket = bucket or self.bucket
+        
+        # Ensure bucket exists
+        await self.ensure_bucket_exists(target_bucket)
+        
         try:
             await asyncio.to_thread(
                 self.client.fput_object,
-                self.bucket,
+                target_bucket,
                 object_name,
                 file_path,
                 content_type=content_type,
             )
-            logger.info(f"Uploaded {file_path} to {object_name}")
+            logger.info(f"Uploaded {file_path} to {object_name} in bucket {target_bucket}")
             return object_name
         except S3Error as e:
             logger.error(f"Error uploading file: {e}")
