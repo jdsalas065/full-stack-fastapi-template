@@ -21,6 +21,7 @@ class Tags(str, Enum):
 
     UTILS = "utils"
     DOCUMENT = "document"
+    CHAT = "chat"
     FILES = "files"
     SUBMISSIONS = "submissions"
     # Add more tags as you add features:

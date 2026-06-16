@@ -37,9 +37,11 @@ def init_db() -> None:
     """
     from sqlmodel import SQLModel
 
+    from app.models.chat import ChatConversation, ChatMessage  # noqa: F401
     # Import all models here to ensure they are registered with SQLModel
     from app.models.file import File  # noqa: F401
     from app.models.item import Item  # noqa: F401
+    from app.models.submission import Submission, SubmissionDocument  # noqa: F401
     from app.models.user import User  # noqa: F401
 
     SQLModel.metadata.create_all(engine)

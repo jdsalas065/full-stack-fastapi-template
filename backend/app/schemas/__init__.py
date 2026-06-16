@@ -8,6 +8,7 @@ Example:
 """
 
 from app.schemas.common import Message
+from app.schemas.chat import ChatRequest, ChatStreamEvent
 from app.schemas.document import (
     CompareDocumentRequest,
     CompareDocumentResponse,
@@ -21,4 +22,6 @@ __all__ = [
     "DocumentSubmissionResponse",
     "CompareDocumentRequest",
     "CompareDocumentResponse",
+    "ChatRequest",
+    "ChatStreamEvent",
 ]

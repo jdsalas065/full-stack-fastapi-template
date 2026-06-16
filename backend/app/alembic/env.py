@@ -22,8 +22,10 @@ config.set_main_option("sqlalchemy.url", str(settings.SQLALCHEMY_DATABASE_URI))
 
 # Import all models here to ensure they are registered with SQLModel metadata
 # This is critical for autogenerate to work properly
+from app.models.chat import ChatConversation, ChatMessage  # noqa: E402, F401
 from app.models.file import File  # noqa: E402, F401
 from app.models.item import Item  # noqa: E402, F401
+from app.models.submission import Submission, SubmissionDocument  # noqa: E402, F401
 from app.models.user import User  # noqa: E402, F401
 
 # Add your model's MetaData object here for 'autogenerate' support

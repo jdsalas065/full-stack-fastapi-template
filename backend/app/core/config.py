@@ -83,6 +83,17 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o"  # or "gpt-4-vision-preview"
     OPENAI_TIMEOUT: float = 30.0  # Timeout in seconds for OpenAI API calls
 
+    # Chat streaming settings
+    CHAT_STREAMING_ENABLED: bool = True
+    CHAT_STREAM_TIMEOUT_SECONDS: float = 60.0
+    CHAT_HEARTBEAT_ENABLED: bool = True
+    CHAT_HEARTBEAT_INTERVAL_SECONDS: float = 12.0
+    CHAT_RETRY_ENABLED: bool = True
+    CHAT_MAX_RETRIES: int = 2
+    CHAT_RETRY_INITIAL_DELAY_SECONDS: float = 0.5
+    CHAT_HISTORY_LIMIT: int = 20
+    CHAT_MAX_CONCURRENT_PER_USER: int = 3
+
     # VLM (Vision Language Model) Settings for OCR with bounding boxes
     VLM_ENDPOINT: str = ""  # Custom VLM API endpoint
     VLM_ID: str = ""  # VLM model identifier

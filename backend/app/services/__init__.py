@@ -21,6 +21,7 @@ from app.services.document_processor import (
     DocumentProcessor,
     document_processor,
 )
+from app.services.chat_service import ChatService, chat_service
 from app.services.field_comparison_service import (
     FieldComparisonService,
     field_comparison_service,
@@ -55,6 +56,8 @@ __all__ = [
     "LLMOCRService",
     "document_processor",
     "DocumentProcessor",
+    "chat_service",
+    "ChatService",
     "field_comparison_service",
     "FieldComparisonService",
 ]
