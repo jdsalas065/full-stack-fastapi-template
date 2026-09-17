@@ -1,0 +1,43 @@
+%APPDATA%\Cursor\User\globalStorage\
+Copy file state.vscdb (nếu có cả state.vscdb.backup thì copy luôn cho chắc). Bỏ vào USB hoặc gửi qua chỗ nào đó lấy được ở công ty.
+
+
+Cái này là Chrome/Edge đã nhớ lựa chọn "chặn" cho giao thức cursor:// rồi — bấm lại bao nhiêu lần cũng vô ích vì dialog không hiện ra nữa. Phải xoá cái ghi nhớ đó.
+
+Cách 1 — Reset quyền của trang cursor.com (nhanh nhất)
+
+Chrome: paste vào thanh địa chỉ
+
+chrome://settings/content/siteDetails?site=https%3A%2F%2Fcursor.com
+
+Bấm Reset permissions (Đặt lại quyền). Làm thêm lần nữa với https%3A%2F%2Fwww.cursor.com và https%3A%2F%2Fauthenticator.cursor.sh.
+
+Edge thì là:
+
+edge://settings/content/siteDetails?site=https%3A%2F%2Fcursor.com
+
+Sau đó login lại, dialog "Open Cursor?" sẽ hiện lại.
+
+Cách 2 — Xoá thẳng trong file Preferences (nếu cách 1 không ăn)
+
+Tắt hẳn Chrome, mở file:
+
+%LOCALAPPDATA%\Google\Chrome\User Data\Default\Preferences
+
+Đây là file JSON 1 dòng dài. Tìm chuỗi excluded_schemes. Bên trong sẽ có kiểu "cursor":true. Sửa thành "cursor":false (hoặc xoá cả cặp đó đi). Lưu lại, mở Chrome, login lại.
+
+Nhớ backup file trước khi sửa.
+
+Cách 3 — Kiểm tra Windows có đăng ký cursor:// không
+
+Nếu 2 cách trên xong mà bấm nút vẫn không có gì xảy ra, khả năng là Windows chưa đăng ký protocol. Mở regedit, vào:
+
+HKEY_CLASSES_ROOT\cursor\shell\open\command
+
+Nếu không có key cursor → Cursor cài mà không đăng ký được protocol. Fix: gỡ ra cài lại bằng bản user installer (không cần admin), cài vào %LOCALAPPDATA%\Programs\cursor. Bản user installer ghi vào HKEY_CURRENT_USER nên không bị chặn quyền admin.
+
+Cách 4 — Bypass trình duyệt luôn
+
+Khi trang login hiện nút "Open Cursor", chuột phải vào nút đó → Copy link address. Bạn sẽ được một chuỗi kiểu cursor://anysphere.cursor-auth/?code=.... Bấm Win + R, paste vào, Enter. Windows sẽ gọi thẳng Cursor, không qua Chrome.
+
+Cách này cũng dùng để test nhanh: nếu Win+R chạy được → lỗi nằm ở Chrome (cách 1/2). Nếu Win+R cũng không mở Cursor → lỗi ở registry (cách 3).
